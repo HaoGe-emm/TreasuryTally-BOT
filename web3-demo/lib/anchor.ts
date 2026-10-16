@@ -10,11 +10,13 @@ export const anchorAbi = parseAbi([
   "event DeliveryAnchored(bytes32 indexed taskDigest, address indexed serviceSigner, uint8 indexed attempt, address requester, bytes32 submissionIdHash, bytes32 reportHash, bytes32 deliveryDigest)"
 ]);
 
-export const publicClient = createPublicClient({ chain: botChain, transport: http() });
+export const publicClient = createPublicClient({
+  chain: botChain, transport: http(undefined, { timeout: 8_000, retryCount: 0 })
+});
 
 const configuredAddress = process.env.NEXT_PUBLIC_ANCHOR_ADDRESS || "";
 const configuredHash = process.env.NEXT_PUBLIC_ANCHOR_RUNTIME_SHA256 || "";
 export const anchorAddress = /^0x[\da-fA-F]{40}$/.test(configuredAddress)
   ? configuredAddress as Address : null;
 export const anchorRuntimeHash = /^0x[\da-fA-F]{64}$/.test(configuredHash)
-  ? configuredHash as Hex : null;
+  ? configuredHash.toLowerCase() as Hex : null;

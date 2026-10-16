@@ -1,0 +1,27 @@
+{
+  "status": "user-confirmed-demo-scope",
+  "scope_confirmation": "User confirmed token, accounts, block and exclusion policy in this chat on 2026-10-16.",
+  "recorded_at_utc": "2026-10-16T13:03:42Z",
+  "requester": "0x89F415bb42e356E8b892C10B05522e0a8Ef151F3",
+  "service_signer": "0xb6bF6a936F529650992B71e2DeB79E80Fd3da71B",
+  "service_id": "treasurytally-bot-internal-demo-20261016",
+  "service_id_hash": "0x540bafe01cfa9731e46b8116f8dc63fa62e3a2853b0cb28beeabdaaa0ddbd7cd",
+  "token_source": "https://dev-docs.botchain.ai/docs/Bridge/contract-addresses/",
+  "block_source": "BOT RPC eth_getBlockByNumber(latest,false), observed during phase-3 read-only preflight",
+  "block_hash_observed": "0x7517d51e1169fcf1e75db8bf15f1fdf6eb16ddd161b06d66200f849e4304ab5c",
+  "business_scope": "Check BOT Chain USDT ERC-20 Transfer events from the requester treasury to the second account in exactly block 26879920.",
+  "transfer_evidence_status": "BOT RPC eth_getLogs succeeded; 0 Transfer logs matched exact token, requester, recipient and block 26879920. This is a zero-match RPC observation, not a financial verification.",
+  "task_commitment_status": "UNSIGNED_AND_NOT_ANCHORED",
+  "limitation": "The confirmed Demo task is a request to inspect a scope. No matching Transfer was returned by this RPC query. No service report, financial outcome or mainnet commitment transaction has been verified.",
+  "transfer_probe": {
+    "method": "eth_getLogs",
+    "result": "success",
+    "matching_transfer_logs": 0,
+    "block_number": 26879920,
+    "block_hash": "0x7517d51e1169fcf1e75db8bf15f1fdf6eb16ddd161b06d66200f849e4304ab5c",
+    "token": "0xaBabc7Ddc03e501d190C676BF3d92ef0e6e87a3C",
+    "from": "0x89F415bb42e356E8b892C10B05522e0a8Ef151F3",
+    "to": "0xb6bF6a936F529650992B71e2DeB79E80Fd3da71B",
+    "source": "User-reported real browser result from the TreasuryTally /preflight page; not independently replayed by this agent."
+  }
+}

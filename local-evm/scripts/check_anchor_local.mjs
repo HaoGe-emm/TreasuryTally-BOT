@@ -26,6 +26,16 @@ const result = JSON.parse(solc.compile(JSON.stringify(input)));
 const errors = (result.errors || []).filter(x => x.severity === "error");
 assert.equal(errors.length, 0, errors.map(x => x.formattedMessage).join("\n"));
 const artifact = result.contracts["CommitmentAnchor.sol"].CommitmentAnchor;
+const preflightArtifact = JSON.parse(readFileSync(
+  join(root, "web3-demo/public/CommitmentAnchor.paris.json"), "utf8"));
+assert.equal(preflightArtifact.compiler, solc.version(), "published preflight compiler");
+assert.equal(preflightArtifact.evmVersion, "paris", "published preflight EVM target");
+assert.deepEqual(preflightArtifact.optimizer, { enabled: true, runs: 200 }, "published optimizer");
+assert.deepEqual(preflightArtifact.abi, artifact.abi, "published preflight ABI");
+assert.equal(preflightArtifact.bytecode, "0x" + artifact.evm.bytecode.object,
+  "published preflight creation bytecode");
+assert.equal(preflightArtifact.deployedBytecode, "0x" + artifact.evm.deployedBytecode.object,
+  "published preflight runtime bytecode");
 const artifactDir = join(project, ".tmp");
 mkdirSync(artifactDir, { recursive: true });
 writeFileSync(join(artifactDir, "CommitmentAnchor.paris.json"),

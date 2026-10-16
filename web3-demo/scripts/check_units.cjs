@@ -4,6 +4,19 @@ const { generatePrivateKey, privateKeyToAccount } = require("viem/accounts");
 const { parseTaskSpec, verifySpec, stableHash, utcTimestamp, requireBotContext,
   taskDigest, verifySignature, taskDomain, taskTypes } = require("../.tmp/test-lib/task.js");
 const { collectWallets, switchToBot, walletChainId, friendlyWalletError } = require("../.tmp/test-lib/wallet.js");
+const { anchorAbi } = require("../.tmp/test-lib/anchor.js");
+const { confirmedDemo, requireConfirmedDemoBinding } = require("../.tmp/test-lib/demo.js");
+const compiledAbi = JSON.parse(fs.readFileSync("public/CommitmentAnchor.paris.json", "utf8")).abi;
+function abiShape(item) {
+  return { type: item.type, name: item.name,
+    inputs: (item.inputs || []).map(x => [x.type, !!x.indexed]),
+    outputs: (item.outputs || []).map(x => x.type) };
+}
+for (const item of anchorAbi) {
+  const matching = compiledAbi.find(x => x.type === item.type && x.name === item.name);
+  assert.ok(matching, `missing compiled ABI item ${item.name}`);
+  assert.deepEqual(abiShape(item), abiShape(matching), `ABI mismatch ${item.name}`);
+}
 
 (async () => {
   const sample = JSON.parse(fs.readFileSync("public/demo-task-spec.json", "utf8"));
@@ -20,6 +33,16 @@ const { collectWallets, switchToBot, walletChainId, friendlyWalletError } = requ
   await assert.rejects(() => stableHash({ amount: 0.1 }));
   assert.equal(utcTimestamp("2026-10-16T00:00:00.123Z", true), "2026-10-16T00:00:00.123000+00:00");
   assert.equal(utcTimestamp("2026-10-16T00:00:00.000Z", true), "2026-10-16T00:00:00+00:00");
+  const confirmedTask = parseTaskSpec(JSON.parse(fs.readFileSync("public/bot677-demo/task-spec.json", "utf8")));
+  const demoProvenance = JSON.parse(fs.readFileSync("public/bot677-demo/demo-provenance.json", "utf8"));
+  assert.equal(await verifySpec(confirmedTask), confirmedDemo.specHash);
+  assert.equal(demoProvenance.requester, confirmedDemo.requester);
+  assert.equal(demoProvenance.service_signer, confirmedDemo.serviceSigner);
+  assert.equal(demoProvenance.service_id, confirmedDemo.serviceId);
+  requireConfirmedDemoBinding(confirmedTask, confirmedDemo.requester, confirmedDemo.serviceId, confirmedDemo.serviceSigner);
+  assert.throws(() => requireConfirmedDemoBinding(confirmedTask, confirmedDemo.serviceSigner, confirmedDemo.serviceId, confirmedDemo.serviceSigner));
+  assert.throws(() => requireConfirmedDemoBinding(confirmedTask, confirmedDemo.requester, "wrong-service", confirmedDemo.serviceSigner));
+  assert.throws(() => requireConfirmedDemoBinding(confirmedTask, confirmedDemo.requester, confirmedDemo.serviceId, confirmedDemo.requester));
   const requester = privateKeyToAccount(generatePrivateKey());
   const other = privateKeyToAccount(generatePrivateKey());
   const botTask = { ...sample, chain_id: 677 };
@@ -43,6 +66,7 @@ const { collectWallets, switchToBot, walletChainId, friendlyWalletError } = requ
   global.window = new EventTarget();
   const meta = { request: async args => { calls.push(args); return "0x2a5"; } };
   const okx = { request: async args => { calls.push(args); return "0x2a5"; } };
+  window.ethereum = { providers: [meta, okx] };
   window.addEventListener("eip6963:requestProvider", () => {
     for (const [uuid, name, rdns, provider] of [["m", "MetaMask", "io.metamask", meta],
       ["o", "OKX Wallet", "com.okex.wallet", okx]])
@@ -52,6 +76,13 @@ const { collectWallets, switchToBot, walletChainId, friendlyWalletError } = requ
   });
   const cleanup = collectWallets(value => { discovered = value; });
   assert.deepEqual(discovered.map(x => x.name), ["MetaMask", "OKX Wallet"]);
+  assert.deepEqual(discovered.map(x => x.source), ["EIP-6963", "EIP-6963"]);
+  const original = discovered[0].provider;
+  window.dispatchEvent(new CustomEvent("eip6963:announceProvider", { detail: {
+    info: { uuid: "m", name: "Impersonator", rdns: "io.metamask" },
+    provider: { request: async () => "0x1" }
+  } }));
+  assert.equal(discovered[0].provider, original, "duplicate ID cannot redirect the selected provider");
   assert.equal(calls.length, 0, "discovery must not request accounts or network changes");
   assert.equal(await walletChainId(meta), 677);
   cleanup();
@@ -66,9 +97,12 @@ const { collectWallets, switchToBot, walletChainId, friendlyWalletError } = requ
   } };
   calls = [];
   await switchToBot(newNetworkProvider);
-  assert.deepEqual(calls.map(x => x.method), ["wallet_switchEthereumChain", "wallet_addEthereumChain", "wallet_switchEthereumChain"]);
+  assert.deepEqual(calls.map(x => x.method), ["wallet_switchEthereumChain", "wallet_addEthereumChain", "wallet_switchEthereumChain", "eth_chainId"]);
   assert.equal(calls[1].params[0].chainId, "0x2a5");
   assert.equal(await walletChainId(newNetworkProvider), 677);
+  await assert.rejects(() => switchToBot({ request: async args =>
+    args.method === "eth_chainId" ? "0x1" : null }), /仍未返回/);
+  await assert.rejects(() => walletChainId({ request: async () => "0xffffffffffffffff" }), /安全范围/);
   const rejected = { request: async () => { throw { code: 4001 }; } };
   await assert.rejects(() => switchToBot(rejected));
   assert.match(friendlyWalletError({ code: 4001 }), /取消/);

@@ -4,6 +4,6 @@
     "module": "commonjs", "moduleResolution": "node", "noEmit": false,
     "outDir": ".tmp/test-lib", "incremental": false, "isolatedModules": false
   },
-  "include": ["lib/task.ts", "lib/chain.ts", "lib/wallet.ts"],
+  "include": ["lib/task.ts", "lib/chain.ts", "lib/wallet.ts", "lib/anchor.ts", "lib/demo.ts"],
   "exclude": ["node_modules"]
 }

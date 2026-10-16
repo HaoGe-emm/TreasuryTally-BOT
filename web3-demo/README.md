@@ -1,14 +1,17 @@
 # TreasuryTally BOT Chain Web3 Demo
 
-Phase 1 local preview. No BOT Chain mainnet contract is configured or deployed. Mainnet writes are disabled by default and must remain disabled until a separate review and approval.
+Local Next.js preview for the BOT Chain Edition. The mainnet contract is not deployed. Task signatures, contract deployment and mainnet business writes are disabled in `.env.example` until separate user approvals.
 
 ```powershell
+cd D:\TreasuryTally-BOT\web3-demo
 npm install
 npm run dev
 ```
 
-Open http://127.0.0.1:3000. Wallet discovery uses EIP-6963 with a legacy injection fallback. Connecting and switching networks only occur after a click. The bundled TaskSpec is an upstream public Sepolia demo sample and cannot be submitted as a BOT task.
+Open http://127.0.0.1:3000. `/preflight` performs read-only RPC calls without a wallet. `/deploy` lets a user connect a wallet, switch to BOT 677, and request a read-only deployment quote. Its deployment button is disabled by default. Connection and network changes happen only after clicks. Wallet names and rdns are extension supplied and should be checked against the wallet popup.
 
-To prepare a real BOT TaskSpec, use the upstream `TaskSpec` model and `task_spec_hash` function. Import its JSON into the page. The page recomputes the canonical SHA-256, verifies the EIP-712 signature against the connected requester, and exposes the full task commitment digest. The contract candidate stores only digests and public addresses; it does not validate reports, funds, service ownership, or financial results.
+The homepage has two distinct task examples. The upstream public fixture is a Sepolia Demo and cannot be submitted as a BOT task. `public/bot677-demo/task-spec.json` is a user-confirmed **BOT 677 Demo request scope** using the upstream `TaskSpec` model. The matching canonical JSON, hash proof and provenance are adjacent. The fixed one-block RPC filter returned zero matching USDT Transfer logs. The task only asks for inspection of that scope; there is no claim that a transfer occurred or that financial verification passed.
 
-Before any later mainnet write, separately review and set `NEXT_PUBLIC_ANCHOR_ADDRESS`, `NEXT_PUBLIC_ANCHOR_RUNTIME_SHA256`, and `NEXT_PUBLIC_ENABLE_MAINNET_WRITES=true`. The last flag is intentionally absent from `.env.example`. The UI also checks wallet and RPC Chain ID 677, runtime bytecode SHA-256, duplicate task records, receipt status, and event fields.
+TaskSpec hash: `0x9e0073e83868993f4da3bc013fe8aca7e90af7a99fb80bcda8d593963528d093`. The homepage recomputes it using the original model's canonical SHA-256 rules. A task digest does not exist until the requester supplies a real EIP-712 signature. The candidate contract stores a digest/requester/service signer mapping and emits the task and service hashes, but does not verify a signature, service authorization, funds, or report truth. The Demo account/service binding is checked in the frontend; the unmodified contract does not enforce it.
+
+The published `CommitmentAnchor.paris.json` is generated from the unchanged upstream contract with solc 0.8.30, optimizer enabled with 200 runs, EVM paris. The local EVM test checks its ABI and both bytecodes against a fresh compilation. Deployment review compares the artifact with fixed SHA-256 values before quoting. Prior to any later write, recheck the wallet account, network, nonce, Gas and bytecode. Separate explicit approvals are required for mainnet contract deployment and `anchorTask`, and both require the user's own wallet confirmation. No GitHub or hosting publication is included here.
