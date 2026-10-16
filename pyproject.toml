@@ -1,0 +1,50 @@
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "trust-receipt"
+version = "0.1.0"
+description = "TreasuryTally: deterministic verification receipts for on-chain service reports"
+requires-python = ">=3.12"
+dependencies = [
+  "agent0-sdk==1.7.1",
+  "httpx",
+  "langchain-openai>=1.6,<2",
+  "mcp==1.26.0",
+  "pydantic",
+  "python-docx==1.2.0",
+  "python-dotenv",
+  "reportlab==4.4.9",
+  "Pillow==12.3.0",
+  "streamlit",
+  "web3==7.13.0",
+]
+
+[project.scripts]
+trust-receipt-headless = "trust_receipt.headless.cli:main"
+trust-receipt-mcp = "trust_receipt.mcp_server.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"trust_receipt.reporting" = ["assets/*.ttf", "assets/*.txt", "assets/*.md", "assets/echarts/*", "assets/renderer/*.cjs", "assets/renderer/*.json", "assets/renderer/*.md"]
+
+[tool.pytest.ini_options]
+addopts = "-ra"
+testpaths = ["tests"]
+pythonpath = ["src"]
+markers = [
+  "external: performs a real call to an external service or blockchain",
+]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
+
+[tool.ruff.lint.per-file-ignores]
+"app/*.py" = ["E402", "RUF001"]

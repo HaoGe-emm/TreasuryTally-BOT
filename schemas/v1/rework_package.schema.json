@@ -1,0 +1,174 @@
+{
+  "$defs": {
+    "FindingType": {
+      "enum": [
+        "MISSING_TRANSFER",
+        "EXTRA_TRANSFER",
+        "DUPLICATE_TRANSFER",
+        "EXCLUDED_INTERNAL_TRANSFER",
+        "OUT_OF_RANGE",
+        "WRONG_TOKEN",
+        "WRONG_DIRECTION",
+        "AMOUNT_MISMATCH",
+        "DECIMAL_ERROR",
+        "INSUFFICIENT_EVIDENCE"
+      ],
+      "title": "FindingType",
+      "type": "string"
+    },
+    "JsonValue": {},
+    "ReworkAction": {
+      "enum": [
+        "ADD_MISSING_TRANSFER",
+        "REMOVE_EXTRA_TRANSFER",
+        "REMOVE_DUPLICATE_TRANSFER",
+        "REMOVE_EXCLUDED_INTERNAL_TRANSFER",
+        "CORRECT_SCOPE",
+        "CORRECT_TOKEN",
+        "CORRECT_DIRECTION",
+        "CORRECT_AMOUNT",
+        "CORRECT_DECIMALS"
+      ],
+      "title": "ReworkAction",
+      "type": "string"
+    },
+    "ReworkItem": {
+      "additionalProperties": false,
+      "properties": {
+        "actual": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "$ref": "#/$defs/JsonValue"
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Actual"
+        },
+        "evidence_refs": {
+          "items": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Evidence Refs",
+          "type": "array"
+        },
+        "expected": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "$ref": "#/$defs/JsonValue"
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Expected"
+        },
+        "finding_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Finding Id",
+          "type": "string"
+        },
+        "finding_type": {
+          "$ref": "#/$defs/FindingType"
+        },
+        "required_action": {
+          "$ref": "#/$defs/ReworkAction"
+        },
+        "violated_rule": {
+          "minLength": 1,
+          "title": "Violated Rule",
+          "type": "string"
+        }
+      },
+      "required": [
+        "finding_id",
+        "finding_type",
+        "violated_rule",
+        "expected",
+        "actual",
+        "evidence_refs",
+        "required_action"
+      ],
+      "title": "ReworkItem",
+      "type": "object"
+    }
+  },
+  "$id": "urn:xinjv:schema:1.0:rework-package",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "created_at": {
+      "format": "date-time",
+      "pattern": ".*(?:Z|[+-]00:00)$",
+      "title": "Created At",
+      "type": "string"
+    },
+    "items": {
+      "items": {
+        "$ref": "#/$defs/ReworkItem"
+      },
+      "minItems": 1,
+      "title": "Items",
+      "type": "array"
+    },
+    "package_hash": {
+      "pattern": "^0x[0-9a-fA-F]{64}$",
+      "title": "Package Hash",
+      "type": "string"
+    },
+    "package_id": {
+      "maxLength": 200,
+      "minLength": 1,
+      "title": "Package Id",
+      "type": "string"
+    },
+    "package_version": {
+      "const": "1.0",
+      "title": "Package Version",
+      "type": "string"
+    },
+    "source_receipt_hash": {
+      "pattern": "^0x[0-9a-fA-F]{64}$",
+      "title": "Source Receipt Hash",
+      "type": "string"
+    },
+    "source_submission_id": {
+      "maxLength": 200,
+      "minLength": 1,
+      "title": "Source Submission Id",
+      "type": "string"
+    },
+    "task_id": {
+      "maxLength": 200,
+      "minLength": 1,
+      "title": "Task Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "package_version",
+    "package_id",
+    "task_id",
+    "source_submission_id",
+    "source_receipt_hash",
+    "created_at",
+    "items",
+    "package_hash"
+  ],
+  "title": "ReworkPackage",
+  "type": "object",
+  "x-contract-invariants": [
+    "items contain only actionable confirmed error findings from one FAIL receipt"
+  ]
+}

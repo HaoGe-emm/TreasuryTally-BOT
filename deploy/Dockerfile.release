@@ -1,0 +1,32 @@
+# Offline app-only release: base must already contain this verified renderer runtime.
+ARG RUNTIME_IMAGE
+FROM ${RUNTIME_IMAGE}
+ARG REVISION
+LABEL org.opencontainers.image.revision=$REVISION
+USER root
+COPY scripts/deploy/renderer_node.py /opt/trust-receipt-renderer/renderer-node
+RUN chmod 0555 /opt/trust-receipt-renderer/renderer-node
+COPY src/trust_receipt/reporting/assets/ReportSans-Regular.ttf /usr/local/share/fonts/report/
+COPY src/trust_receipt/reporting/assets/OFL.txt /usr/local/share/fonts/report/OFL.txt
+RUN fc-cache -f
+COPY trust_receipt-0.1.0-py3-none-any.whl /tmp/trust_receipt-0.1.0-py3-none-any.whl
+RUN python -m pip install --no-index --no-deps --force-reinstall /tmp/trust_receipt-0.1.0-py3-none-any.whl && python -m pip check
+RUN test -x /opt/trust-receipt-renderer/renderer-node \
+    && test -f /opt/trust-receipt-renderer/node_modules/sharp/LICENSE \
+    && node --version | grep -Fx 'v22.23.3' \
+    && fc-match -f '%{family}' 'TreasuryTally Report Sans' | grep -F 'TreasuryTally Report Sans'
+ENV REPORT_RENDERER_NODE=/opt/trust-receipt-renderer/renderer-node \
+    REPORT_RENDERER_MODULES=/opt/trust-receipt-renderer/node_modules
+# The real entrypoint prepends /app/src. Updating only the wheel is insufficient.
+COPY --chown=app:app src /app/src
+COPY --chown=app:app app /app/app
+COPY --chown=app:app fixtures /app/fixtures
+COPY --chown=app:app .streamlit /app/.streamlit
+COPY scripts/deploy/check_image.py /opt/trust-receipt-smoke/check_image.py
+COPY scripts/deploy/check_report_runtime.py /opt/trust-receipt-smoke/check_report_runtime.py
+COPY scripts/deploy/check_report_downloads.py /opt/trust-receipt-smoke/check_report_downloads.py
+COPY scripts/deploy/check_report_memory.py /opt/trust-receipt-smoke/check_report_memory.py
+WORKDIR /app
+USER app
+# -c retains the /app working-directory import semantics of python -m streamlit.
+RUN python -c "import runpy; runpy.run_path('/opt/trust-receipt-smoke/check_image.py', run_name='__main__')"

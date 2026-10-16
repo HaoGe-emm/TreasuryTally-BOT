@@ -1,0 +1,88 @@
+{
+  "inventory_version": "1.0",
+  "chain_id": 11155111,
+  "token_address": "0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9",
+  "start_block": 11855664,
+  "end_block": 11855664,
+  "source": "rpc",
+  "transfers": [
+    {
+      "chain_id": 11155111,
+      "token_address": "0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9",
+      "transaction_hash": "0x7cdd2a07fc41fc5ad4138fbc5047c67962cf9b69d80626c6bbb41bcc01e728b2",
+      "log_index": 61,
+      "block_number": 11855664,
+      "block_hash": "0xa34d4187a82b7db3d805d896b100403e634c0abdc7fa61756e05217369de8cb7",
+      "from_address": "0x0C88262f03B183DD183C2fC7A78578dBcE1e664C",
+      "to_address": "0x3dea9a7d55beA23D193B9308a7e85E6A2a9a6364",
+      "amount_base_units": "321794352786",
+      "token_decimals": 18,
+      "source": "rpc"
+    },
+    {
+      "chain_id": 11155111,
+      "token_address": "0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9",
+      "transaction_hash": "0xac2d059525e65f0a151d32bd28ad35ac4af1594d92f39bea1a61059fdc6aed3c",
+      "log_index": 68,
+      "block_number": 11855664,
+      "block_hash": "0xa34d4187a82b7db3d805d896b100403e634c0abdc7fa61756e05217369de8cb7",
+      "from_address": "0x8f6eB7870334b1FD8006Fd52413f01689f4E57e9",
+      "to_address": "0x0A435eae846135f76C0Af90eb3bA0CFb5f8Ebb6C",
+      "amount_base_units": "51098135378450",
+      "token_decimals": 18,
+      "source": "rpc"
+    },
+    {
+      "chain_id": 11155111,
+      "token_address": "0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9",
+      "transaction_hash": "0xfe42c06f65738fcd8cd19b40014301e3f3010de3a0a662bf282e696d7a62a0dd",
+      "log_index": 106,
+      "block_number": 11855664,
+      "block_hash": "0xa34d4187a82b7db3d805d896b100403e634c0abdc7fa61756e05217369de8cb7",
+      "from_address": "0xfBeB092D901982014C4D0AAD2554BCaABaf42Bf3",
+      "to_address": "0xE787c35F6A875567409C4970BA7B41A0CB9d1B4D",
+      "amount_base_units": "192030552062642",
+      "token_decimals": 18,
+      "source": "rpc"
+    },
+    {
+      "chain_id": 11155111,
+      "token_address": "0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9",
+      "transaction_hash": "0xf326d83f9120f863ac4a28486bd4dfa5c1ca3166897c55cd2b7da38d3b8c617b",
+      "log_index": 117,
+      "block_number": 11855664,
+      "block_hash": "0xa34d4187a82b7db3d805d896b100403e634c0abdc7fa61756e05217369de8cb7",
+      "from_address": "0xA1f78beD1a79B9aec972e373E0e7F63d8cAce4a8",
+      "to_address": "0x9308f73b39DC0041c3353E795FB37Ae2251Bb94F",
+      "amount_base_units": "366291052890756",
+      "token_decimals": 18,
+      "source": "rpc"
+    },
+    {
+      "chain_id": 11155111,
+      "token_address": "0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9",
+      "transaction_hash": "0x833dbd9b3e7ad13c265b0971712ced292c03ea93ebecf0f9df68495890ab7bf9",
+      "log_index": 122,
+      "block_number": 11855664,
+      "block_hash": "0xa34d4187a82b7db3d805d896b100403e634c0abdc7fa61756e05217369de8cb7",
+      "from_address": "0x5f0CA7Cf1f68dA02ef8d990bc66780ca5A92C2F5",
+      "to_address": "0xE787c35F6A875567409C4970BA7B41A0CB9d1B4D",
+      "amount_base_units": "604200743371",
+      "token_decimals": 18,
+      "source": "rpc"
+    },
+    {
+      "chain_id": 11155111,
+      "token_address": "0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9",
+      "transaction_hash": "0x0442da2dc2aa4e4557e648fe3a6fad49c43f5e9db89b36e156f1a790d3b64b6f",
+      "log_index": 128,
+      "block_number": 11855664,
+      "block_hash": "0xa34d4187a82b7db3d805d896b100403e634c0abdc7fa61756e05217369de8cb7",
+      "from_address": "0x4c78402270506eD073E05d4f0a02406bCc386560",
+      "to_address": "0x315E5193633A962B3F369F9C3833D973D0588cCD",
+      "amount_base_units": "180674489737",
+      "token_decimals": 18,
+      "source": "rpc"
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+* text=auto
+*.md text eol=lf
+*.py text eol=lf
+*.json text eol=lf
+*.jsonl text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf
+*.toml text eol=lf
+*.txt text eol=lf
+*.env.example text eol=lf
+
+# Keep pinned upstream ECharts bytes unchanged across Windows/Linux checkouts.
+src/trust_receipt/reporting/assets/echarts/echarts-6.0.0.min.js -text
+src/trust_receipt/reporting/assets/echarts/LICENSE.txt -text
+src/trust_receipt/reporting/assets/echarts/NOTICE.txt -text

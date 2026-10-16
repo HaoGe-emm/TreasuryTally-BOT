@@ -1,0 +1,233 @@
+{
+  "$defs": {
+    "CommitmentStatus": {
+      "enum": [
+        "VERIFIED",
+        "UNVERIFIED",
+        "INVALID"
+      ],
+      "title": "CommitmentStatus",
+      "type": "string"
+    },
+    "PublicReferenceKind": {
+      "enum": [
+        "URI",
+        "RECEIPT_HASH",
+        "TASK_HASH",
+        "FEEDBACK_TRANSACTION"
+      ],
+      "title": "PublicReferenceKind",
+      "type": "string"
+    },
+    "PublicVerificationStatus": {
+      "enum": [
+        "VERIFIED",
+        "INCONCLUSIVE",
+        "INVALID"
+      ],
+      "title": "PublicVerificationStatus",
+      "type": "string"
+    },
+    "RevisionResolution": {
+      "enum": [
+        "ORIGINAL",
+        "RESUBMITTED",
+        "FIXED",
+        "UNRESOLVED"
+      ],
+      "title": "RevisionResolution",
+      "type": "string"
+    },
+    "VerificationCheck": {
+      "additionalProperties": false,
+      "properties": {
+        "check_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Check Id",
+          "type": "string"
+        },
+        "detail": {
+          "minLength": 1,
+          "title": "Detail",
+          "type": "string"
+        },
+        "state": {
+          "$ref": "#/$defs/VerificationCheckState"
+        }
+      },
+      "required": [
+        "check_id",
+        "state",
+        "detail"
+      ],
+      "title": "VerificationCheck",
+      "type": "object"
+    },
+    "VerificationCheckState": {
+      "enum": [
+        "PASSED",
+        "FAILED",
+        "UNVERIFIED"
+      ],
+      "title": "VerificationCheckState",
+      "type": "string"
+    },
+    "VerificationOutcome": {
+      "enum": [
+        "PASS",
+        "FAIL",
+        "INCONCLUSIVE"
+      ],
+      "title": "VerificationOutcome",
+      "type": "string"
+    }
+  },
+  "$id": "urn:xinjv:schema:1.0:public-verification-result",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "attempt": {
+      "anyOf": [
+        {
+          "enum": [
+            1,
+            2
+          ],
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Attempt"
+    },
+    "checks": {
+      "items": {
+        "$ref": "#/$defs/VerificationCheck"
+      },
+      "minItems": 1,
+      "title": "Checks",
+      "type": "array"
+    },
+    "commitment_status": {
+      "$ref": "#/$defs/CommitmentStatus"
+    },
+    "evidence_refs": {
+      "items": {
+        "minLength": 1,
+        "type": "string"
+      },
+      "title": "Evidence Refs",
+      "type": "array"
+    },
+    "outcome": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/VerificationOutcome"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "reason": {
+      "anyOf": [
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Reason"
+    },
+    "receipt_hash": {
+      "anyOf": [
+        {
+          "pattern": "^0x[0-9a-fA-F]{64}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Receipt Hash"
+    },
+    "reference_kind": {
+      "$ref": "#/$defs/PublicReferenceKind"
+    },
+    "reference_value": {
+      "minLength": 1,
+      "title": "Reference Value",
+      "type": "string"
+    },
+    "resolution": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/RevisionResolution"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "service_id": {
+      "anyOf": [
+        {
+          "maxLength": 200,
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Service Id"
+    },
+    "status": {
+      "$ref": "#/$defs/PublicVerificationStatus"
+    },
+    "task_id": {
+      "anyOf": [
+        {
+          "maxLength": 200,
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Task Id"
+    },
+    "verification_version": {
+      "const": "1.0",
+      "title": "Verification Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "verification_version",
+    "reference_kind",
+    "reference_value",
+    "status",
+    "task_id",
+    "service_id",
+    "attempt",
+    "receipt_hash",
+    "outcome",
+    "resolution",
+    "evidence_refs",
+    "commitment_status",
+    "checks",
+    "reason"
+  ],
+  "title": "PublicVerificationResult",
+  "type": "object",
+  "x-contract-invariants": [
+    "missing necessary public evidence is INCONCLUSIVE and conflicting evidence is INVALID",
+    "missing optional M8 commitment evidence remains explicitly UNVERIFIED"
+  ]
+}

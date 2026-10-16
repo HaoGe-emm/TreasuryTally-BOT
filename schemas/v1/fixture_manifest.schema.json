@@ -1,0 +1,87 @@
+{
+  "$defs": {
+    "FixtureManifestEntry": {
+      "additionalProperties": false,
+      "properties": {
+        "expected_outcome": {
+          "$ref": "#/$defs/VerificationOutcome"
+        },
+        "file": {
+          "minLength": 1,
+          "pattern": "^cases/[a-z0-9]+(?:-[a-z0-9]+)*\\.json$",
+          "title": "File",
+          "type": "string"
+        },
+        "fixture_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "title": "Fixture Id",
+          "type": "string"
+        },
+        "tags": {
+          "items": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Tags",
+          "type": "array"
+        },
+        "title": {
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        }
+      },
+      "required": [
+        "fixture_id",
+        "file",
+        "title",
+        "tags",
+        "expected_outcome"
+      ],
+      "title": "FixtureManifestEntry",
+      "type": "object"
+    },
+    "VerificationOutcome": {
+      "enum": [
+        "PASS",
+        "FAIL",
+        "INCONCLUSIVE"
+      ],
+      "title": "VerificationOutcome",
+      "type": "string"
+    }
+  },
+  "$id": "urn:xinjv:schema:1.0:fixture-manifest",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "fixture_version": {
+      "const": "1.0",
+      "title": "Fixture Version",
+      "type": "string"
+    },
+    "fixtures": {
+      "items": {
+        "$ref": "#/$defs/FixtureManifestEntry"
+      },
+      "maxItems": 12,
+      "minItems": 12,
+      "title": "Fixtures",
+      "type": "array"
+    }
+  },
+  "required": [
+    "fixture_version",
+    "fixtures"
+  ],
+  "title": "FixtureManifest",
+  "type": "object",
+  "x-contract-invariants": [
+    "fixture IDs and files are unique",
+    "each file is cases/<fixture_id>.json"
+  ]
+}

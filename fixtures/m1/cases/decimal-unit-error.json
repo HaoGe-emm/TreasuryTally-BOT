@@ -1,0 +1,123 @@
+{
+  "fixture_version": "1.0",
+  "fixture_id": "decimal-unit-error",
+  "title": "Base-unit amount scaled by an extra factor",
+  "tags": [
+    "decimal-error",
+    "amount-unit",
+    "fail"
+  ],
+  "task_spec": {
+    "schema_version": "1.0",
+    "task_id": "m1-task-10",
+    "chain_id": 11155111,
+    "token_address": "0x0000000000000000000000000000000000001000",
+    "treasury_addresses": [
+      "0x0000000000000000000000000000000000002001",
+      "0x0000000000000000000000000000000000002002"
+    ],
+    "recipient_addresses": [
+      "0x0000000000000000000000000000000000003001",
+      "0x0000000000000000000000000000000000003002"
+    ],
+    "start_block": 1000,
+    "end_block": 1010,
+    "exclusion_rules": [
+      {
+        "rule_id": "exclude-treasury-internal",
+        "rule_type": "EXCLUDE_TREASURY_INTERNAL",
+        "reason": "Transfers between confirmed treasury accounts are not grants."
+      }
+    ],
+    "max_records": 200,
+    "confirmed_at": "2026-10-06T07:00:00Z",
+    "spec_hash": "0x0000000000000000000000000000000000000000000000000000000000030d4a"
+  },
+  "submission": {
+    "schema_version": "1.0",
+    "submission_id": "m1-submission-10",
+    "task_id": "m1-task-10",
+    "service_id": "synthetic-report-service-a",
+    "service_version": "fixture-1.0",
+    "attempt": 1,
+    "claimed_total_base_units": "100000000",
+    "claimed_count": 1,
+    "transfers": [
+      {
+        "chain_id": 11155111,
+        "token_address": "0x0000000000000000000000000000000000001000",
+        "transaction_hash": "0x00000000000000000000000000000000000000000000000000000000000003e9",
+        "log_index": 0,
+        "block_number": 1006,
+        "block_hash": "0x0000000000000000000000000000000000000000000000000000000000018a8e",
+        "from_address": "0x0000000000000000000000000000000000002001",
+        "to_address": "0x0000000000000000000000000000000000003001",
+        "amount_base_units": "100000000",
+        "token_decimals": 6,
+        "source": "service"
+      }
+    ],
+    "report_text": "Synthetic M1 fixture report; no production or personal data.",
+    "created_at": "2026-10-06T07:15:00Z",
+    "report_hash": "0x00000000000000000000000000000000000000000000000000000000000493ea",
+    "signature": null
+  },
+  "reference": {
+    "sources": [
+      {
+        "source": "rpc",
+        "source_id": "fixture-rpc-10",
+        "retrieved_at": "2026-10-06T07:30:00Z",
+        "complete": true,
+        "details": {
+          "environment": "synthetic-test-data",
+          "range_inclusive": true
+        }
+      }
+    ],
+    "reference_complete": true,
+    "evidence_sufficient": true,
+    "transfers": [
+      {
+        "chain_id": 11155111,
+        "token_address": "0x0000000000000000000000000000000000001000",
+        "transaction_hash": "0x00000000000000000000000000000000000000000000000000000000000003e9",
+        "log_index": 0,
+        "block_number": 1006,
+        "block_hash": "0x0000000000000000000000000000000000000000000000000000000000018a8e",
+        "from_address": "0x0000000000000000000000000000000000002001",
+        "to_address": "0x0000000000000000000000000000000000003001",
+        "amount_base_units": "1000000",
+        "token_decimals": 6,
+        "source": "rpc"
+      }
+    ],
+    "insufficiency_reason": null
+  },
+  "expected": {
+    "outcome": "FAIL",
+    "calculated_total_base_units": "1000000",
+    "calculated_count": 1,
+    "findings": [
+      {
+        "finding_type": "DECIMAL_ERROR",
+        "severity": "error",
+        "status": "confirmed",
+        "violated_rule": "amounts must use token base units with the confirmed decimals",
+        "event_keys": [
+          [
+            11155111,
+            "0x00000000000000000000000000000000000000000000000000000000000003e9",
+            0
+          ]
+        ]
+      }
+    ]
+  },
+  "human_review": {
+    "summary": "The service multiplied the base-unit value by 100 even though decimals is unchanged.",
+    "calculation": "Reference total is 1000000 base units; submitted total is 100000000.",
+    "reviewer": "M1 fixture reviewer",
+    "verified_at": "2026-10-06T08:00:00Z"
+  }
+}

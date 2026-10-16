@@ -1,0 +1,135 @@
+{
+  "fixture_version": "1.0",
+  "fixture_id": "correct-multi-log",
+  "title": "Correct report with two logs in one transaction",
+  "tags": [
+    "correct",
+    "pass",
+    "multi-log"
+  ],
+  "task_spec": {
+    "schema_version": "1.0",
+    "task_id": "m1-task-02",
+    "chain_id": 11155111,
+    "token_address": "0x0000000000000000000000000000000000001000",
+    "treasury_addresses": [
+      "0x0000000000000000000000000000000000002001",
+      "0x0000000000000000000000000000000000002002"
+    ],
+    "recipient_addresses": [
+      "0x0000000000000000000000000000000000003001",
+      "0x0000000000000000000000000000000000003002"
+    ],
+    "start_block": 1000,
+    "end_block": 1010,
+    "exclusion_rules": [
+      {
+        "rule_id": "exclude-treasury-internal",
+        "rule_type": "EXCLUDE_TREASURY_INTERNAL",
+        "reason": "Transfers between confirmed treasury accounts are not grants."
+      }
+    ],
+    "max_records": 200,
+    "confirmed_at": "2026-10-06T07:00:00Z",
+    "spec_hash": "0x0000000000000000000000000000000000000000000000000000000000030d42"
+  },
+  "submission": {
+    "schema_version": "1.0",
+    "submission_id": "m1-submission-02",
+    "task_id": "m1-task-02",
+    "service_id": "synthetic-report-service-a",
+    "service_version": "fixture-1.0",
+    "attempt": 1,
+    "claimed_total_base_units": "60000",
+    "claimed_count": 2,
+    "transfers": [
+      {
+        "chain_id": 11155111,
+        "token_address": "0x0000000000000000000000000000000000001000",
+        "transaction_hash": "0x00000000000000000000000000000000000000000000000000000000000000c9",
+        "log_index": 0,
+        "block_number": 1003,
+        "block_hash": "0x0000000000000000000000000000000000000000000000000000000000018a8b",
+        "from_address": "0x0000000000000000000000000000000000002001",
+        "to_address": "0x0000000000000000000000000000000000003001",
+        "amount_base_units": "25000",
+        "token_decimals": 6,
+        "source": "service"
+      },
+      {
+        "chain_id": 11155111,
+        "token_address": "0x0000000000000000000000000000000000001000",
+        "transaction_hash": "0x00000000000000000000000000000000000000000000000000000000000000c9",
+        "log_index": 1,
+        "block_number": 1003,
+        "block_hash": "0x0000000000000000000000000000000000000000000000000000000000018a8b",
+        "from_address": "0x0000000000000000000000000000000000002001",
+        "to_address": "0x0000000000000000000000000000000000003002",
+        "amount_base_units": "35000",
+        "token_decimals": 6,
+        "source": "service"
+      }
+    ],
+    "report_text": "Synthetic M1 fixture report; no production or personal data.",
+    "created_at": "2026-10-06T07:15:00Z",
+    "report_hash": "0x00000000000000000000000000000000000000000000000000000000000493e2",
+    "signature": null
+  },
+  "reference": {
+    "sources": [
+      {
+        "source": "blockscout",
+        "source_id": "fixture-blockscout-02",
+        "retrieved_at": "2026-10-06T07:30:00Z",
+        "complete": true,
+        "details": {
+          "environment": "synthetic-test-data",
+          "range_inclusive": true
+        }
+      }
+    ],
+    "reference_complete": true,
+    "evidence_sufficient": true,
+    "transfers": [
+      {
+        "chain_id": 11155111,
+        "token_address": "0x0000000000000000000000000000000000001000",
+        "transaction_hash": "0x00000000000000000000000000000000000000000000000000000000000000c9",
+        "log_index": 0,
+        "block_number": 1003,
+        "block_hash": "0x0000000000000000000000000000000000000000000000000000000000018a8b",
+        "from_address": "0x0000000000000000000000000000000000002001",
+        "to_address": "0x0000000000000000000000000000000000003001",
+        "amount_base_units": "25000",
+        "token_decimals": 6,
+        "source": "blockscout"
+      },
+      {
+        "chain_id": 11155111,
+        "token_address": "0x0000000000000000000000000000000000001000",
+        "transaction_hash": "0x00000000000000000000000000000000000000000000000000000000000000c9",
+        "log_index": 1,
+        "block_number": 1003,
+        "block_hash": "0x0000000000000000000000000000000000000000000000000000000000018a8b",
+        "from_address": "0x0000000000000000000000000000000000002001",
+        "to_address": "0x0000000000000000000000000000000000003002",
+        "amount_base_units": "35000",
+        "token_decimals": 6,
+        "source": "blockscout"
+      }
+    ],
+    "insufficiency_reason": null
+  },
+  "expected": {
+    "outcome": "PASS",
+    "calculated_total_base_units": "60000",
+    "calculated_count": 2,
+    "findings": []
+  },
+  "human_review": {
+    "summary": "Both logs are retained because log_index is part of event identity.",
+    "calculation": "25000 + 35000 = 60000; count = 2.",
+    "reviewer": "M1 fixture reviewer",
+    "verified_at": "2026-10-06T08:00:00Z"
+  }
+}

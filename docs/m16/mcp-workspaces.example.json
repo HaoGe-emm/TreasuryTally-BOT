@@ -1,0 +1,12 @@
+{
+  "config_version": "1.0",
+  "workspaces": {
+    "ws_replace_with_random_handle": {
+      "directory": "../../.tmp/m16-live-workspace",
+      "project_root": "../..",
+      "profile": "LIVE_READ_ONLY",
+      "ai_provider": "deepseek",
+      "evidence_provider": "rpc"
+    }
+  }
+}

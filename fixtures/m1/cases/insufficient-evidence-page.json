@@ -1,0 +1,122 @@
+{
+  "fixture_version": "1.0",
+  "fixture_id": "insufficient-evidence-page",
+  "title": "Unknown pagination prevents a conclusion",
+  "tags": [
+    "insufficient-evidence",
+    "inconclusive"
+  ],
+  "task_spec": {
+    "schema_version": "1.0",
+    "task_id": "m1-task-12",
+    "chain_id": 11155111,
+    "token_address": "0x0000000000000000000000000000000000001000",
+    "treasury_addresses": [
+      "0x0000000000000000000000000000000000002001",
+      "0x0000000000000000000000000000000000002002"
+    ],
+    "recipient_addresses": [
+      "0x0000000000000000000000000000000000003001",
+      "0x0000000000000000000000000000000000003002"
+    ],
+    "start_block": 1000,
+    "end_block": 1010,
+    "exclusion_rules": [
+      {
+        "rule_id": "exclude-treasury-internal",
+        "rule_type": "EXCLUDE_TREASURY_INTERNAL",
+        "reason": "Transfers between confirmed treasury accounts are not grants."
+      }
+    ],
+    "max_records": 200,
+    "confirmed_at": "2026-10-06T07:00:00Z",
+    "spec_hash": "0x0000000000000000000000000000000000000000000000000000000000030d4c"
+  },
+  "submission": {
+    "schema_version": "1.0",
+    "submission_id": "m1-submission-12",
+    "task_id": "m1-task-12",
+    "service_id": "synthetic-report-service-a",
+    "service_version": "fixture-1.0",
+    "attempt": 1,
+    "claimed_total_base_units": "17000",
+    "claimed_count": 1,
+    "transfers": [
+      {
+        "chain_id": 11155111,
+        "token_address": "0x0000000000000000000000000000000000001000",
+        "transaction_hash": "0x00000000000000000000000000000000000000000000000000000000000004b1",
+        "log_index": 0,
+        "block_number": 1001,
+        "block_hash": "0x0000000000000000000000000000000000000000000000000000000000018a89",
+        "from_address": "0x0000000000000000000000000000000000002001",
+        "to_address": "0x0000000000000000000000000000000000003001",
+        "amount_base_units": "17000",
+        "token_decimals": 6,
+        "source": "service"
+      }
+    ],
+    "report_text": "Synthetic M1 fixture report; no production or personal data.",
+    "created_at": "2026-10-06T07:15:00Z",
+    "report_hash": "0x00000000000000000000000000000000000000000000000000000000000493ec",
+    "signature": null
+  },
+  "reference": {
+    "sources": [
+      {
+        "source": "rpc",
+        "source_id": "fixture-rpc-12",
+        "retrieved_at": "2026-10-06T07:30:00Z",
+        "complete": false,
+        "details": {
+          "environment": "synthetic-test-data",
+          "range_inclusive": true
+        }
+      }
+    ],
+    "reference_complete": false,
+    "evidence_sufficient": false,
+    "transfers": [
+      {
+        "chain_id": 11155111,
+        "token_address": "0x0000000000000000000000000000000000001000",
+        "transaction_hash": "0x00000000000000000000000000000000000000000000000000000000000004b1",
+        "log_index": 0,
+        "block_number": 1001,
+        "block_hash": "0x0000000000000000000000000000000000000000000000000000000000018a89",
+        "from_address": "0x0000000000000000000000000000000000002001",
+        "to_address": "0x0000000000000000000000000000000000003001",
+        "amount_base_units": "17000",
+        "token_decimals": 6,
+        "source": "rpc"
+      }
+    ],
+    "insufficiency_reason": "Pagination cursor state is unknown after the first synthetic page."
+  },
+  "expected": {
+    "outcome": "INCONCLUSIVE",
+    "calculated_total_base_units": null,
+    "calculated_count": null,
+    "findings": [
+      {
+        "finding_type": "INSUFFICIENT_EVIDENCE",
+        "severity": "warning",
+        "status": "hypothesis",
+        "violated_rule": "all reference pages must be proven complete",
+        "event_keys": [
+          [
+            11155111,
+            "0x00000000000000000000000000000000000000000000000000000000000004b1",
+            0
+          ]
+        ]
+      }
+    ]
+  },
+  "human_review": {
+    "summary": "The first page is available but the adapter cannot prove pagination completion.",
+    "calculation": "No authoritative total or count is calculated while completeness is unknown.",
+    "reviewer": "M1 fixture reviewer",
+    "verified_at": "2026-10-06T08:00:00Z"
+  }
+}

@@ -1,0 +1,49 @@
+services:
+  app:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    image: trust-receipt:${TRUST_RECEIPT_IMAGE_TAG:-latest}
+    container_name: trust-receipt
+    restart: unless-stopped
+    mem_limit: 640m
+    memswap_limit: 640m
+    pids_limit: 128
+    cpus: 1
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    env_file:
+      - ../.env
+    environment:
+      APP_REQUIRE_LIVE: "true"
+      REPORT_RENDERER_NODE: /opt/trust-receipt-renderer/renderer-node
+      REPORT_RENDERER_MODULES: /opt/trust-receipt-renderer/node_modules
+      BLOCKSCOUT_MCP_URL: http://trust-receipt-blockscout:8000
+    volumes:
+      - ../data:/app/data
+      - ../receipts/private:/app/receipts/private
+      - ../receipts/public:/app/receipts/public
+    depends_on:
+      blockscout:
+        condition: service_started
+    networks:
+      - campus-net
+
+  blockscout:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.blockscout
+    image: trust-receipt-blockscout:${TRUST_RECEIPT_IMAGE_TAG:-latest}
+    container_name: trust-receipt-blockscout
+    restart: unless-stopped
+    env_file:
+      - ../.env
+    networks:
+      - campus-net
+
+networks:
+  campus-net:
+    external: true
+    name: campus-creator_campus-net

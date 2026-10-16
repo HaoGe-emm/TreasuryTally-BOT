@@ -1,0 +1,17 @@
+agent0-sdk==1.7.1
+langchain>=1.4,<2
+langchain-openai
+streamlit
+web3==7.13.0
+pandas
+pydantic
+python-dotenv
+python-docx==1.2.0
+reportlab==4.4.9
+Pillow==12.3.0
+httpx
+mcp==1.26.0
+sqlalchemy
+pytest
+pytest-asyncio
+ruff

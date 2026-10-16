@@ -1,0 +1,338 @@
+{
+  "$defs": {
+    "EvidenceSource": {
+      "enum": [
+        "rpc",
+        "blockscout",
+        "service"
+      ],
+      "title": "EvidenceSource",
+      "type": "string"
+    },
+    "FundFlowEdge": {
+      "additionalProperties": false,
+      "properties": {
+        "amount_base_units": {
+          "pattern": "^(0|[1-9][0-9]*)$",
+          "title": "Amount Base Units",
+          "type": "string"
+        },
+        "edge_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Edge Id",
+          "type": "string"
+        },
+        "event_key": {
+          "maxItems": 3,
+          "minItems": 3,
+          "prefixItems": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "integer"
+            },
+            {
+              "pattern": "^0x[0-9a-fA-F]{64}$",
+              "type": "string"
+            },
+            {
+              "minimum": 0,
+              "type": "integer"
+            }
+          ],
+          "title": "Event Key",
+          "type": "array"
+        },
+        "finding_ids": {
+          "items": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": "Finding Ids",
+          "type": "array"
+        },
+        "from_node_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "From Node Id",
+          "type": "string"
+        },
+        "reference_records": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/TransferRecord"
+          },
+          "title": "Reference Records",
+          "type": "array"
+        },
+        "reference_refs": {
+          "items": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": "Reference Refs",
+          "type": "array"
+        },
+        "service_records": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/TransferRecord"
+          },
+          "title": "Service Records",
+          "type": "array"
+        },
+        "service_refs": {
+          "items": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": "Service Refs",
+          "type": "array"
+        },
+        "status": {
+          "$ref": "#/$defs/FundFlowVisualStatus"
+        },
+        "to_node_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "To Node Id",
+          "type": "string"
+        },
+        "token_decimals": {
+          "maximum": 255,
+          "minimum": 0,
+          "title": "Token Decimals",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "edge_id",
+        "from_node_id",
+        "to_node_id",
+        "event_key",
+        "amount_base_units",
+        "token_decimals",
+        "status",
+        "service_refs",
+        "reference_refs",
+        "finding_ids"
+      ],
+      "title": "FundFlowEdge",
+      "type": "object"
+    },
+    "FundFlowNode": {
+      "additionalProperties": false,
+      "properties": {
+        "address": {
+          "pattern": "^0x[0-9a-fA-F]{40}$",
+          "title": "Address",
+          "type": "string"
+        },
+        "label": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Label",
+          "type": "string"
+        },
+        "node_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Node Id",
+          "type": "string"
+        },
+        "role": {
+          "$ref": "#/$defs/FundFlowNodeRole"
+        }
+      },
+      "required": [
+        "node_id",
+        "address",
+        "role",
+        "label"
+      ],
+      "title": "FundFlowNode",
+      "type": "object"
+    },
+    "FundFlowNodeRole": {
+      "enum": [
+        "TREASURY",
+        "RECIPIENT",
+        "EXTERNAL"
+      ],
+      "title": "FundFlowNodeRole",
+      "type": "string"
+    },
+    "FundFlowVisualStatus": {
+      "enum": [
+        "MATCHED",
+        "MISSING_FROM_REPORT",
+        "NOT_FOUND_ON_CHAIN",
+        "INTERNAL_TRANSFER",
+        "DUPLICATE",
+        "INCONCLUSIVE",
+        "MISMATCH",
+        "INVALID_SCOPE"
+      ],
+      "title": "FundFlowVisualStatus",
+      "type": "string"
+    },
+    "TransferRecord": {
+      "additionalProperties": false,
+      "properties": {
+        "amount_base_units": {
+          "pattern": "^(0|[1-9][0-9]*)$",
+          "title": "Amount Base Units",
+          "type": "string"
+        },
+        "block_hash": {
+          "anyOf": [
+            {
+              "pattern": "^0x[0-9a-fA-F]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Block Hash"
+        },
+        "block_number": {
+          "minimum": 0,
+          "title": "Block Number",
+          "type": "integer"
+        },
+        "chain_id": {
+          "exclusiveMinimum": 0,
+          "title": "Chain Id",
+          "type": "integer"
+        },
+        "from_address": {
+          "pattern": "^0x[0-9a-fA-F]{40}$",
+          "title": "From Address",
+          "type": "string"
+        },
+        "log_index": {
+          "minimum": 0,
+          "title": "Log Index",
+          "type": "integer"
+        },
+        "source": {
+          "$ref": "#/$defs/EvidenceSource"
+        },
+        "to_address": {
+          "pattern": "^0x[0-9a-fA-F]{40}$",
+          "title": "To Address",
+          "type": "string"
+        },
+        "token_address": {
+          "pattern": "^0x[0-9a-fA-F]{40}$",
+          "title": "Token Address",
+          "type": "string"
+        },
+        "token_decimals": {
+          "maximum": 255,
+          "minimum": 0,
+          "title": "Token Decimals",
+          "type": "integer"
+        },
+        "transaction_hash": {
+          "pattern": "^0x[0-9a-fA-F]{64}$",
+          "title": "Transaction Hash",
+          "type": "string"
+        }
+      },
+      "required": [
+        "chain_id",
+        "token_address",
+        "transaction_hash",
+        "log_index",
+        "block_number",
+        "block_hash",
+        "from_address",
+        "to_address",
+        "amount_base_units",
+        "token_decimals",
+        "source"
+      ],
+      "title": "TransferRecord",
+      "type": "object"
+    },
+    "VerificationOutcome": {
+      "enum": [
+        "PASS",
+        "FAIL",
+        "INCONCLUSIVE"
+      ],
+      "title": "VerificationOutcome",
+      "type": "string"
+    }
+  },
+  "$id": "urn:xinjv:schema:1.0:fund-flow-projection",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "attempt": {
+      "maximum": 2,
+      "minimum": 1,
+      "title": "Attempt",
+      "type": "integer"
+    },
+    "calculated_total_base_units": {
+      "anyOf": [
+        {
+          "pattern": "^(0|[1-9][0-9]*)$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Calculated Total Base Units"
+    },
+    "claimed_total_base_units": {
+      "pattern": "^(0|[1-9][0-9]*)$",
+      "title": "Claimed Total Base Units",
+      "type": "string"
+    },
+    "edges": {
+      "items": {
+        "$ref": "#/$defs/FundFlowEdge"
+      },
+      "title": "Edges",
+      "type": "array"
+    },
+    "nodes": {
+      "items": {
+        "$ref": "#/$defs/FundFlowNode"
+      },
+      "title": "Nodes",
+      "type": "array"
+    },
+    "outcome": {
+      "$ref": "#/$defs/VerificationOutcome"
+    },
+    "task_id": {
+      "maxLength": 200,
+      "minLength": 1,
+      "title": "Task Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "task_id",
+    "attempt",
+    "claimed_total_base_units",
+    "calculated_total_base_units",
+    "outcome",
+    "nodes",
+    "edges"
+  ],
+  "title": "FundFlowProjection",
+  "type": "object",
+  "x-contract-invariants": [
+    "visual state derives from existing findings and never changes the outcome"
+  ]
+}

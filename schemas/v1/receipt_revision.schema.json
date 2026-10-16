@@ -1,0 +1,128 @@
+{
+  "$defs": {
+    "RevisionResolution": {
+      "enum": [
+        "ORIGINAL",
+        "RESUBMITTED",
+        "FIXED",
+        "UNRESOLVED"
+      ],
+      "title": "RevisionResolution",
+      "type": "string"
+    },
+    "VerificationOutcome": {
+      "enum": [
+        "PASS",
+        "FAIL",
+        "INCONCLUSIVE"
+      ],
+      "title": "VerificationOutcome",
+      "type": "string"
+    }
+  },
+  "$id": "urn:xinjv:schema:1.0:receipt-revision",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "attempt": {
+      "enum": [
+        1,
+        2
+      ],
+      "title": "Attempt",
+      "type": "integer"
+    },
+    "created_at": {
+      "format": "date-time",
+      "pattern": ".*(?:Z|[+-]00:00)$",
+      "title": "Created At",
+      "type": "string"
+    },
+    "evidence_refs": {
+      "items": {
+        "minLength": 1,
+        "type": "string"
+      },
+      "minItems": 1,
+      "title": "Evidence Refs",
+      "type": "array"
+    },
+    "outcome": {
+      "$ref": "#/$defs/VerificationOutcome"
+    },
+    "parent_receipt_hash": {
+      "anyOf": [
+        {
+          "pattern": "^0x[0-9a-fA-F]{64}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Parent Receipt Hash"
+    },
+    "receipt_hash": {
+      "pattern": "^0x[0-9a-fA-F]{64}$",
+      "title": "Receipt Hash",
+      "type": "string"
+    },
+    "resolution": {
+      "$ref": "#/$defs/RevisionResolution"
+    },
+    "revision_hash": {
+      "pattern": "^0x[0-9a-fA-F]{64}$",
+      "title": "Revision Hash",
+      "type": "string"
+    },
+    "revision_version": {
+      "const": "1.0",
+      "title": "Revision Version",
+      "type": "string"
+    },
+    "service_id": {
+      "maxLength": 200,
+      "minLength": 1,
+      "title": "Service Id",
+      "type": "string"
+    },
+    "supersedes_receipt_hash": {
+      "anyOf": [
+        {
+          "pattern": "^0x[0-9a-fA-F]{64}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Supersedes Receipt Hash"
+    },
+    "task_id": {
+      "maxLength": 200,
+      "minLength": 1,
+      "title": "Task Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "revision_version",
+    "task_id",
+    "service_id",
+    "attempt",
+    "receipt_hash",
+    "outcome",
+    "resolution",
+    "parent_receipt_hash",
+    "supersedes_receipt_hash",
+    "evidence_refs",
+    "created_at",
+    "revision_hash"
+  ],
+  "title": "ReceiptRevision",
+  "type": "object",
+  "x-contract-invariants": [
+    "attempt 1 is ORIGINAL without parent links",
+    "attempt 2 links and supersedes attempt 1 without changing either Receipt 1.0 object"
+  ]
+}

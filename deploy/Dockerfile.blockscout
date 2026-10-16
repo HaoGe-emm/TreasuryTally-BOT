@@ -1,0 +1,23 @@
+FROM python:3.12-slim AS builder
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends git ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+RUN git clone --recurse-submodules https://github.com/blockscout/mcp-server.git /src \
+    && git -C /src checkout 095ef2c03f1aa3325da0baa41c8bf29aa1bbb6e6 \
+    && git -C /src submodule update --init --recursive \
+    && python -m pip wheel --no-cache-dir --wheel-dir /wheels /src
+
+FROM python:3.12-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+WORKDIR /tmp/blockscout-mcp
+COPY --from=builder /wheels /wheels
+RUN python -m pip install --no-cache-dir /wheels/*.whl && rm -rf /wheels
+
+EXPOSE 8000
+CMD ["python", "-m", "blockscout_mcp_server", "--http", \
+     "--http-host", "0.0.0.0", "--http-port", "8000"]

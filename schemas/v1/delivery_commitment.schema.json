@@ -1,0 +1,104 @@
+{
+  "$id": "urn:xinjv:schema:1.0:delivery-commitment",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "acceptance_signature": {
+      "pattern": "^0x[0-9a-fA-F]{130}$",
+      "title": "Acceptance Signature",
+      "type": "string"
+    },
+    "accepted_at": {
+      "format": "date-time",
+      "pattern": ".*(?:Z|[+-]00:00)$",
+      "title": "Accepted At",
+      "type": "string"
+    },
+    "attempt": {
+      "maximum": 2,
+      "minimum": 1,
+      "title": "Attempt",
+      "type": "integer"
+    },
+    "commitment_version": {
+      "const": "1.0",
+      "title": "Commitment Version",
+      "type": "string"
+    },
+    "report_hash": {
+      "pattern": "^0x[0-9a-fA-F]{64}$",
+      "title": "Report Hash",
+      "type": "string"
+    },
+    "service_id": {
+      "maxLength": 200,
+      "minLength": 1,
+      "title": "Service Id",
+      "type": "string"
+    },
+    "signature": {
+      "pattern": "^0x[0-9a-fA-F]{130}$",
+      "title": "Signature",
+      "type": "string"
+    },
+    "signature_scheme": {
+      "const": "EIP712",
+      "title": "Signature Scheme",
+      "type": "string"
+    },
+    "signer_address": {
+      "pattern": "^0x[0-9a-fA-F]{40}$",
+      "title": "Signer Address",
+      "type": "string"
+    },
+    "spec_hash": {
+      "pattern": "^0x[0-9a-fA-F]{64}$",
+      "title": "Spec Hash",
+      "type": "string"
+    },
+    "submission_id": {
+      "maxLength": 200,
+      "minLength": 1,
+      "title": "Submission Id",
+      "type": "string"
+    },
+    "submitted_at": {
+      "format": "date-time",
+      "pattern": ".*(?:Z|[+-]00:00)$",
+      "title": "Submitted At",
+      "type": "string"
+    },
+    "task_commitment_hash": {
+      "pattern": "^0x[0-9a-fA-F]{64}$",
+      "title": "Task Commitment Hash",
+      "type": "string"
+    },
+    "task_commitment_id": {
+      "maxLength": 200,
+      "minLength": 1,
+      "title": "Task Commitment Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "commitment_version",
+    "task_commitment_id",
+    "task_commitment_hash",
+    "spec_hash",
+    "submission_id",
+    "service_id",
+    "attempt",
+    "report_hash",
+    "accepted_at",
+    "submitted_at",
+    "signer_address",
+    "signature_scheme",
+    "acceptance_signature",
+    "signature"
+  ],
+  "title": "DeliveryCommitment",
+  "type": "object",
+  "x-contract-invariants": [
+    "acceptance and delivery signatures bind task, service, attempt, and report hash"
+  ]
+}

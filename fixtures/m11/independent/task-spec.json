@@ -1,0 +1,18 @@
+{
+  "schema_version": "1.0",
+  "task_id": "m11-sepolia-weth-independent-61",
+  "chain_id": 11155111,
+  "token_address": "0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9",
+  "treasury_addresses": [
+    "0x0C88262f03B183DD183C2fC7A78578dBcE1e664C"
+  ],
+  "recipient_addresses": [
+    "0x3dea9a7d55beA23D193B9308a7e85E6A2a9a6364"
+  ],
+  "start_block": 11855664,
+  "end_block": 11855664,
+  "exclusion_rules": [],
+  "max_records": 200,
+  "confirmed_at": "2026-10-07T07:10:54.306364Z",
+  "spec_hash": "0x94ba3e955bc900d405d7c57f8186164e20b8a1b5200cc1e7e78ba636032a779c"
+}

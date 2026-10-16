@@ -1,0 +1,185 @@
+{
+  "$defs": {
+    "AttemptSnapshot": {
+      "additionalProperties": false,
+      "properties": {
+        "attempt": {
+          "enum": [
+            1,
+            2
+          ],
+          "title": "Attempt",
+          "type": "integer"
+        },
+        "calculated_total_base_units": {
+          "anyOf": [
+            {
+              "pattern": "^(0|[1-9][0-9]*)$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Calculated Total Base Units"
+        },
+        "claimed_total_base_units": {
+          "pattern": "^(0|[1-9][0-9]*)$",
+          "title": "Claimed Total Base Units",
+          "type": "string"
+        },
+        "commitment_status": {
+          "$ref": "#/$defs/CommitmentStatus"
+        },
+        "evidence_refs": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Evidence Refs",
+          "type": "array"
+        },
+        "finding_ids": {
+          "items": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": "Finding Ids",
+          "type": "array"
+        },
+        "outcome": {
+          "$ref": "#/$defs/VerificationOutcome"
+        },
+        "receipt_hash": {
+          "pattern": "^0x[0-9a-fA-F]{64}$",
+          "title": "Receipt Hash",
+          "type": "string"
+        },
+        "resolution": {
+          "$ref": "#/$defs/RevisionResolution"
+        },
+        "service_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Service Id",
+          "type": "string"
+        },
+        "submission_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Submission Id",
+          "type": "string"
+        },
+        "task_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Task Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "task_id",
+        "service_id",
+        "submission_id",
+        "attempt",
+        "receipt_hash",
+        "outcome",
+        "resolution",
+        "claimed_total_base_units",
+        "calculated_total_base_units",
+        "finding_ids",
+        "evidence_refs",
+        "commitment_status"
+      ],
+      "title": "AttemptSnapshot",
+      "type": "object"
+    },
+    "CommitmentStatus": {
+      "enum": [
+        "VERIFIED",
+        "UNVERIFIED",
+        "INVALID"
+      ],
+      "title": "CommitmentStatus",
+      "type": "string"
+    },
+    "RevisionResolution": {
+      "enum": [
+        "ORIGINAL",
+        "RESUBMITTED",
+        "FIXED",
+        "UNRESOLVED"
+      ],
+      "title": "RevisionResolution",
+      "type": "string"
+    },
+    "VerificationOutcome": {
+      "enum": [
+        "PASS",
+        "FAIL",
+        "INCONCLUSIVE"
+      ],
+      "title": "VerificationOutcome",
+      "type": "string"
+    }
+  },
+  "$id": "urn:xinjv:schema:1.0:repair-comparison",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "after": {
+      "$ref": "#/$defs/AttemptSnapshot"
+    },
+    "before": {
+      "$ref": "#/$defs/AttemptSnapshot"
+    },
+    "comparison_version": {
+      "const": "1.0",
+      "title": "Comparison Version",
+      "type": "string"
+    },
+    "remaining_finding_ids": {
+      "items": {
+        "maxLength": 200,
+        "minLength": 1,
+        "type": "string"
+      },
+      "title": "Remaining Finding Ids",
+      "type": "array"
+    },
+    "resolution": {
+      "$ref": "#/$defs/RevisionResolution"
+    },
+    "resolved_finding_ids": {
+      "items": {
+        "maxLength": 200,
+        "minLength": 1,
+        "type": "string"
+      },
+      "title": "Resolved Finding Ids",
+      "type": "array"
+    },
+    "task_id": {
+      "maxLength": 200,
+      "minLength": 1,
+      "title": "Task Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "comparison_version",
+    "task_id",
+    "before",
+    "after",
+    "resolved_finding_ids",
+    "remaining_finding_ids",
+    "resolution"
+  ],
+  "title": "RepairComparison",
+  "type": "object",
+  "x-contract-invariants": [
+    "before is attempt 1 and after is attempt 2 for the same immutable task"
+  ]
+}

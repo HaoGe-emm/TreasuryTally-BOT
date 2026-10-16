@@ -1,0 +1,140 @@
+{
+  "$defs": {
+    "Claim": {
+      "additionalProperties": false,
+      "properties": {
+        "claim_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Claim Id",
+          "type": "string"
+        },
+        "claim_type": {
+          "$ref": "#/$defs/ClaimType"
+        },
+        "value": {
+          "$ref": "#/$defs/JsonValue"
+        }
+      },
+      "required": [
+        "claim_id",
+        "claim_type",
+        "value"
+      ],
+      "title": "Claim",
+      "type": "object"
+    },
+    "ClaimType": {
+      "enum": [
+        "CLAIMED_TOTAL",
+        "CLAIMED_COUNT",
+        "TRANSFER_SET"
+      ],
+      "title": "ClaimType",
+      "type": "string"
+    },
+    "ClarificationIssue": {
+      "additionalProperties": false,
+      "properties": {
+        "description": {
+          "minLength": 1,
+          "title": "Description",
+          "type": "string"
+        },
+        "options": {
+          "default": [],
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "maxItems": 10,
+          "title": "Options",
+          "type": "array"
+        },
+        "target": {
+          "$ref": "#/$defs/ClarificationTarget"
+        }
+      },
+      "required": [
+        "target",
+        "description"
+      ],
+      "title": "ClarificationIssue",
+      "type": "object"
+    },
+    "ClarificationTarget": {
+      "enum": [
+        "chain_id",
+        "token_address",
+        "treasury_addresses",
+        "recipient_addresses",
+        "start_block",
+        "end_block",
+        "exclusion_rules",
+        "claimed_total",
+        "claimed_count",
+        "transfer_set"
+      ],
+      "title": "ClarificationTarget",
+      "type": "string"
+    },
+    "JsonValue": {}
+  },
+  "$id": "urn:xinjv:schema:1.0:claim-extraction",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "ambiguities": {
+      "items": {
+        "$ref": "#/$defs/ClarificationIssue"
+      },
+      "title": "Ambiguities",
+      "type": "array"
+    },
+    "claims": {
+      "items": {
+        "$ref": "#/$defs/Claim"
+      },
+      "title": "Claims",
+      "type": "array"
+    },
+    "clarification_questions": {
+      "items": {
+        "minLength": 1,
+        "type": "string"
+      },
+      "title": "Clarification Questions",
+      "type": "array"
+    },
+    "report_id": {
+      "maxLength": 200,
+      "minLength": 1,
+      "title": "Report Id",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "source_summary": {
+      "minLength": 1,
+      "title": "Source Summary",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema_version",
+    "report_id",
+    "claims",
+    "ambiguities",
+    "clarification_questions",
+    "source_summary"
+  ],
+  "title": "ClaimExtraction",
+  "type": "object",
+  "x-contract-invariants": [
+    "claim IDs and claim types are unique and values match their closed claim type",
+    "ambiguous claims require clarification questions"
+  ]
+}

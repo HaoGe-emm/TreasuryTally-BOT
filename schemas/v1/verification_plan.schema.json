@@ -1,0 +1,268 @@
+{
+  "$defs": {
+    "AggregationRuleType": {
+      "enum": [
+        "SUM_BASE_UNITS",
+        "COUNT_TRANSFERS"
+      ],
+      "title": "AggregationRuleType",
+      "type": "string"
+    },
+    "ApprovedAggregationRule": {
+      "additionalProperties": false,
+      "properties": {
+        "aggregation_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Aggregation Id",
+          "type": "string"
+        },
+        "aggregation_type": {
+          "$ref": "#/$defs/AggregationRuleType"
+        },
+        "arguments": {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "title": "Arguments",
+          "type": "object"
+        }
+      },
+      "required": [
+        "aggregation_id",
+        "aggregation_type",
+        "arguments"
+      ],
+      "title": "ApprovedAggregationRule",
+      "type": "object"
+    },
+    "ApprovedCheck": {
+      "additionalProperties": false,
+      "properties": {
+        "arguments": {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "title": "Arguments",
+          "type": "object"
+        },
+        "check_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Check Id",
+          "type": "string"
+        },
+        "check_type": {
+          "$ref": "#/$defs/CheckType"
+        }
+      },
+      "required": [
+        "check_id",
+        "check_type",
+        "arguments"
+      ],
+      "title": "ApprovedCheck",
+      "type": "object"
+    },
+    "ApprovedFilter": {
+      "additionalProperties": false,
+      "properties": {
+        "arguments": {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "title": "Arguments",
+          "type": "object"
+        },
+        "filter_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Filter Id",
+          "type": "string"
+        },
+        "filter_type": {
+          "$ref": "#/$defs/FilterType"
+        }
+      },
+      "required": [
+        "filter_id",
+        "filter_type",
+        "arguments"
+      ],
+      "title": "ApprovedFilter",
+      "type": "object"
+    },
+    "ApprovedQuery": {
+      "additionalProperties": false,
+      "properties": {
+        "arguments": {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "title": "Arguments",
+          "type": "object"
+        },
+        "query_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Query Id",
+          "type": "string"
+        },
+        "query_type": {
+          "$ref": "#/$defs/QueryType"
+        }
+      },
+      "required": [
+        "query_id",
+        "query_type",
+        "arguments"
+      ],
+      "title": "ApprovedQuery",
+      "type": "object"
+    },
+    "CheckType": {
+      "enum": [
+        "COMPARE_EVENT_SET",
+        "COMPARE_TOTAL",
+        "DETECT_DUPLICATES",
+        "VALIDATE_SCOPE",
+        "VALIDATE_TOKEN_DECIMALS"
+      ],
+      "title": "CheckType",
+      "type": "string"
+    },
+    "Claim": {
+      "additionalProperties": false,
+      "properties": {
+        "claim_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Claim Id",
+          "type": "string"
+        },
+        "claim_type": {
+          "$ref": "#/$defs/ClaimType"
+        },
+        "value": {
+          "$ref": "#/$defs/JsonValue"
+        }
+      },
+      "required": [
+        "claim_id",
+        "claim_type",
+        "value"
+      ],
+      "title": "Claim",
+      "type": "object"
+    },
+    "ClaimType": {
+      "enum": [
+        "CLAIMED_TOTAL",
+        "CLAIMED_COUNT",
+        "TRANSFER_SET"
+      ],
+      "title": "ClaimType",
+      "type": "string"
+    },
+    "FilterType": {
+      "enum": [
+        "TOKEN_ADDRESS",
+        "BLOCK_RANGE",
+        "TREASURY_DIRECTION",
+        "EXCLUDE_INTERNAL_TRANSFER",
+        "RECIPIENT_SET"
+      ],
+      "title": "FilterType",
+      "type": "string"
+    },
+    "JsonValue": {},
+    "QueryType": {
+      "enum": [
+        "FETCH_ERC20_TRANSFERS"
+      ],
+      "title": "QueryType",
+      "type": "string"
+    }
+  },
+  "$id": "urn:xinjv:schema:1.0:verification-plan",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "aggregation_rules": {
+      "items": {
+        "$ref": "#/$defs/ApprovedAggregationRule"
+      },
+      "minItems": 1,
+      "title": "Aggregation Rules",
+      "type": "array"
+    },
+    "checks": {
+      "items": {
+        "$ref": "#/$defs/ApprovedCheck"
+      },
+      "minItems": 1,
+      "title": "Checks",
+      "type": "array"
+    },
+    "claims": {
+      "items": {
+        "$ref": "#/$defs/Claim"
+      },
+      "minItems": 1,
+      "title": "Claims",
+      "type": "array"
+    },
+    "filters": {
+      "items": {
+        "$ref": "#/$defs/ApprovedFilter"
+      },
+      "minItems": 1,
+      "title": "Filters",
+      "type": "array"
+    },
+    "plan_id": {
+      "maxLength": 200,
+      "minLength": 1,
+      "title": "Plan Id",
+      "type": "string"
+    },
+    "plan_version": {
+      "maxLength": 200,
+      "minLength": 1,
+      "title": "Plan Version",
+      "type": "string"
+    },
+    "queries": {
+      "items": {
+        "$ref": "#/$defs/ApprovedQuery"
+      },
+      "minItems": 1,
+      "title": "Queries",
+      "type": "array"
+    },
+    "schema_version": {
+      "const": "1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "task_id": {
+      "maxLength": 200,
+      "minLength": 1,
+      "title": "Task Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema_version",
+    "plan_id",
+    "task_id",
+    "claims",
+    "queries",
+    "filters",
+    "aggregation_rules",
+    "checks",
+    "plan_version"
+  ],
+  "title": "VerificationPlan",
+  "type": "object"
+}

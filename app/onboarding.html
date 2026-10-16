@@ -1,0 +1,102 @@
+<style>
+  #tr-onboarding { box-sizing: border-box; width: min(560px, calc(100vw - 32px));
+    max-height: calc(100dvh - 32px); overflow: auto; padding: 24px; margin: auto;
+    border: 1px solid #665e48; border-radius: 12px; background: #181a1b;
+    color: #f1eee7; font-family: inherit; font-size: 16px; line-height: 1.6; }
+  #tr-onboarding::backdrop { background: rgb(0 0 0 / 72%); }
+  #tr-onboarding * { box-sizing: border-box; }
+  #tr-onboarding h2 { margin: 0 0 16px; font-size: 24px; line-height: 1.4; }
+  #tr-onboarding h3 { margin: 0 0 12px; font-size: 20px; line-height: 1.4; }
+  #tr-onboarding p { margin: 0 0 16px; overflow-wrap: anywhere; }
+  #tr-onboarding .tr-guide-meta { color: #c4beb0; font-size: 14px; }
+  #tr-onboarding .tr-guide-top { display: flex; gap: 16px; align-items: start;
+    justify-content: space-between; }
+  #tr-onboarding .tr-guide-actions { display: flex; flex-wrap: wrap; gap: 12px;
+    justify-content: flex-end; margin-top: 24px; }
+  #tr-onboarding button { min-height: 44px; padding: 8px 16px; border-radius: 8px;
+    border: 1px solid #777064; background: #252728; color: #f1eee7;
+    font: inherit; cursor: pointer; }
+  #tr-onboarding button:focus-visible { outline: 3px solid #f0d798; outline-offset: 4px; }
+  #tr-onboarding button:disabled { opacity: .45; cursor: default; }
+  #tr-onboarding [data-guide-next] { background: #e2c477; color: #191919; border-color: #e2c477; }
+  #tr-onboarding [data-guide-close] { flex-shrink: 0; padding: 8px 12px; }
+  #tr-onboarding [data-guide-step]:focus { outline: none; }
+  @media (max-width: 480px) {
+    #tr-onboarding { padding: 16px; }
+    #tr-onboarding .tr-guide-actions button { flex: 1; }
+  }
+</style>
+<dialog id="tr-onboarding" aria-labelledby="tr-guide-title" aria-describedby="tr-guide-safety">
+  <div class="tr-guide-top">
+    <h2 id="tr-guide-title">开始前，了解验收流程</h2>
+    <button type="button" data-guide-close aria-label="关闭新手引导">关闭</button>
+  </div>
+  <p class="tr-guide-meta" data-guide-progress aria-live="polite"></p>
+  <section data-guide-step tabindex="-1">
+    <h3 data-guide-heading></h3>
+    <p data-guide-description></p>
+  </section>
+  <p id="tr-guide-safety" class="tr-guide-meta">引导只作说明，不会自动确认范围、执行验收、发布回执或写链。关闭后可继续操作；刷新网页会重新显示。</p>
+  <div class="tr-guide-actions">
+    <button type="button" data-guide-previous>上一步</button>
+    <button type="button" data-guide-next>下一步</button>
+  </div>
+</dialog>
+<script>
+(() => {
+  // Document-scoped UI state deliberately does not use session/local storage:
+  // a browser reload is new onboarding, a backend rerun is not.
+  const stateKey = Symbol.for("trust-receipt.onboarding.v1");
+  const state = document[stateKey] ??= { step: 0, dismissed: false, returnFocus: null };
+  const dialog = document.getElementById("tr-onboarding");
+  if (!dialog || dialog.dataset.guideBound === "true") return;
+  dialog.dataset.guideBound = "true";
+  const steps = [
+    ["上传报表", "选择服务商的 CSV、Excel .xlsx 或 JSON，系统自动读取并识别。只有缺关键条件或单位不清时才询问；缺事件信息需修正原文件。识别不代表核验通过或认证作者，团队案例报表也不是独立链上证据。旧 .xls 不支持。"],
+    ["确认核验范围", "核对链、资产、账户、区块范围与排除规则。任务候选仍可编辑，只有你明确确认后才会冻结范围；AI 不决定最终金额。"],
+    ["开始链上核验", "主动点击开始核对，将报表与独立链上证据逐项对照。证据不足或外部服务失败会显示无法下结论（INCONCLUSIVE），不会视为负面信誉。"],
+    ["查看差异，最多补交一次", "检查金额差异、问题说明与对应事件。首次未通过可按返工建议补交或换源一次；两次验收分别留档，不会覆盖首次结果。"],
+    ["保存与验证回执", "查看版本化回执及证据来源，也可进入独立公开验证页。公开发布与写链都需要另行授权，未提交、已提交和已确认不是同一状态。"],
+  ];
+  const previous = dialog.querySelector("[data-guide-previous]");
+  const next = dialog.querySelector("[data-guide-next]");
+  const stepRegion = dialog.querySelector("[data-guide-step]");
+  function paint(focusStep = false) {
+    dialog.querySelector("[data-guide-heading]").textContent = steps[state.step][0];
+    dialog.querySelector("[data-guide-description]").textContent = steps[state.step][1];
+    dialog.querySelector("[data-guide-progress]").textContent = `第 ${state.step + 1} 步，共 ${steps.length} 步`;
+    previous.disabled = state.step === 0;
+    next.textContent = state.step === steps.length - 1 ? "完成引导" : "下一步";
+    if (focusStep) stepRegion.focus();
+  }
+  function dismiss() {
+    state.dismissed = true;
+    dialog.close();
+    if (state.returnFocus?.isConnected) state.returnFocus.focus();
+  }
+  previous.addEventListener("click", () => { state.step = Math.max(0, state.step - 1); paint(true); });
+  next.addEventListener("click", () => {
+    if (state.step === steps.length - 1) dismiss();
+    else { state.step += 1; paint(true); }
+  });
+  dialog.querySelector("[data-guide-close]").addEventListener("click", dismiss);
+  dialog.addEventListener("cancel", event => { event.preventDefault(); dismiss(); });
+  dialog.addEventListener("keydown", event => {
+    if (event.key !== "Tab") return;
+    const controls = [...dialog.querySelectorAll("button")].filter(button => !button.disabled);
+    const first = controls[0];
+    const last = controls[controls.length - 1];
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault(); last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault(); first.focus();
+    }
+  });
+  paint();
+  if (!state.dismissed) {
+    if (!state.returnFocus) state.returnFocus = document.activeElement;
+    dialog.showModal();
+    dialog.querySelector("[data-guide-close]").focus();
+  }
+})();
+</script>

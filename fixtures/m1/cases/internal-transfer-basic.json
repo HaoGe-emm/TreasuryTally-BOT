@@ -1,0 +1,148 @@
+{
+  "fixture_version": "1.0",
+  "fixture_id": "internal-transfer-basic",
+  "title": "Treasury internal movement counted as grant",
+  "tags": [
+    "internal-transfer",
+    "fail"
+  ],
+  "task_spec": {
+    "schema_version": "1.0",
+    "task_id": "m1-task-07",
+    "chain_id": 11155111,
+    "token_address": "0x0000000000000000000000000000000000001000",
+    "treasury_addresses": [
+      "0x0000000000000000000000000000000000002001",
+      "0x0000000000000000000000000000000000002002"
+    ],
+    "recipient_addresses": [
+      "0x0000000000000000000000000000000000003001",
+      "0x0000000000000000000000000000000000003002"
+    ],
+    "start_block": 1000,
+    "end_block": 1010,
+    "exclusion_rules": [
+      {
+        "rule_id": "exclude-treasury-internal",
+        "rule_type": "EXCLUDE_TREASURY_INTERNAL",
+        "reason": "Transfers between confirmed treasury accounts are not grants."
+      }
+    ],
+    "max_records": 200,
+    "confirmed_at": "2026-10-06T07:00:00Z",
+    "spec_hash": "0x0000000000000000000000000000000000000000000000000000000000030d47"
+  },
+  "submission": {
+    "schema_version": "1.0",
+    "submission_id": "m1-submission-07",
+    "task_id": "m1-task-07",
+    "service_id": "synthetic-report-service-a",
+    "service_version": "fixture-1.0",
+    "attempt": 1,
+    "claimed_total_base_units": "92000",
+    "claimed_count": 2,
+    "transfers": [
+      {
+        "chain_id": 11155111,
+        "token_address": "0x0000000000000000000000000000000000001000",
+        "transaction_hash": "0x00000000000000000000000000000000000000000000000000000000000002bd",
+        "log_index": 0,
+        "block_number": 1003,
+        "block_hash": "0x0000000000000000000000000000000000000000000000000000000000018a8b",
+        "from_address": "0x0000000000000000000000000000000000002001",
+        "to_address": "0x0000000000000000000000000000000000003001",
+        "amount_base_units": "80000",
+        "token_decimals": 6,
+        "source": "service"
+      },
+      {
+        "chain_id": 11155111,
+        "token_address": "0x0000000000000000000000000000000000001000",
+        "transaction_hash": "0x00000000000000000000000000000000000000000000000000000000000002be",
+        "log_index": 0,
+        "block_number": 1004,
+        "block_hash": "0x0000000000000000000000000000000000000000000000000000000000018a8c",
+        "from_address": "0x0000000000000000000000000000000000002001",
+        "to_address": "0x0000000000000000000000000000000000002002",
+        "amount_base_units": "12000",
+        "token_decimals": 6,
+        "source": "service"
+      }
+    ],
+    "report_text": "Synthetic M1 fixture report; no production or personal data.",
+    "created_at": "2026-10-06T07:15:00Z",
+    "report_hash": "0x00000000000000000000000000000000000000000000000000000000000493e7",
+    "signature": null
+  },
+  "reference": {
+    "sources": [
+      {
+        "source": "rpc",
+        "source_id": "fixture-rpc-07",
+        "retrieved_at": "2026-10-06T07:30:00Z",
+        "complete": true,
+        "details": {
+          "environment": "synthetic-test-data",
+          "range_inclusive": true
+        }
+      }
+    ],
+    "reference_complete": true,
+    "evidence_sufficient": true,
+    "transfers": [
+      {
+        "chain_id": 11155111,
+        "token_address": "0x0000000000000000000000000000000000001000",
+        "transaction_hash": "0x00000000000000000000000000000000000000000000000000000000000002bd",
+        "log_index": 0,
+        "block_number": 1003,
+        "block_hash": "0x0000000000000000000000000000000000000000000000000000000000018a8b",
+        "from_address": "0x0000000000000000000000000000000000002001",
+        "to_address": "0x0000000000000000000000000000000000003001",
+        "amount_base_units": "80000",
+        "token_decimals": 6,
+        "source": "rpc"
+      },
+      {
+        "chain_id": 11155111,
+        "token_address": "0x0000000000000000000000000000000000001000",
+        "transaction_hash": "0x00000000000000000000000000000000000000000000000000000000000002be",
+        "log_index": 0,
+        "block_number": 1004,
+        "block_hash": "0x0000000000000000000000000000000000000000000000000000000000018a8c",
+        "from_address": "0x0000000000000000000000000000000000002001",
+        "to_address": "0x0000000000000000000000000000000000002002",
+        "amount_base_units": "12000",
+        "token_decimals": 6,
+        "source": "rpc"
+      }
+    ],
+    "insufficiency_reason": null
+  },
+  "expected": {
+    "outcome": "FAIL",
+    "calculated_total_base_units": "80000",
+    "calculated_count": 1,
+    "findings": [
+      {
+        "finding_type": "EXCLUDED_INTERNAL_TRANSFER",
+        "severity": "error",
+        "status": "confirmed",
+        "violated_rule": "confirmed treasury-to-treasury transfers must be excluded",
+        "event_keys": [
+          [
+            11155111,
+            "0x00000000000000000000000000000000000000000000000000000000000002be",
+            0
+          ]
+        ]
+      }
+    ]
+  },
+  "human_review": {
+    "summary": "The internal movement is evidence but is excluded from the grant total.",
+    "calculation": "92000 - 12000 = 80000.",
+    "reviewer": "M1 fixture reviewer",
+    "verified_at": "2026-10-06T08:00:00Z"
+  }
+}

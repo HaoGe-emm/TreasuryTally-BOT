@@ -1,0 +1,147 @@
+{
+  "$defs": {
+    "CommitmentAnchor": {
+      "additionalProperties": false,
+      "properties": {
+        "block_number": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Block Number"
+        },
+        "chain_id": {
+          "exclusiveMinimum": 0,
+          "title": "Chain Id",
+          "type": "integer"
+        },
+        "status": {
+          "$ref": "#/$defs/CommitmentAnchorStatus"
+        },
+        "transaction_hash": {
+          "anyOf": [
+            {
+              "pattern": "^0x[0-9a-fA-F]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Transaction Hash"
+        }
+      },
+      "required": [
+        "chain_id",
+        "status"
+      ],
+      "title": "CommitmentAnchor",
+      "type": "object"
+    },
+    "CommitmentAnchorStatus": {
+      "enum": [
+        "NOT_SUBMITTED",
+        "SUBMITTED",
+        "CONFIRMED",
+        "FAILED"
+      ],
+      "title": "CommitmentAnchorStatus",
+      "type": "string"
+    }
+  },
+  "$id": "urn:xinjv:schema:1.0:task-commitment",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "anchor": {
+      "$ref": "#/$defs/CommitmentAnchor"
+    },
+    "commitment_id": {
+      "maxLength": 200,
+      "minLength": 1,
+      "title": "Commitment Id",
+      "type": "string"
+    },
+    "commitment_version": {
+      "const": "1.0",
+      "title": "Commitment Version",
+      "type": "string"
+    },
+    "created_at": {
+      "format": "date-time",
+      "pattern": ".*(?:Z|[+-]00:00)$",
+      "title": "Created At",
+      "type": "string"
+    },
+    "expires_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "pattern": ".*(?:Z|[+-]00:00)$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Expires At"
+    },
+    "requester_address": {
+      "pattern": "^0x[0-9a-fA-F]{40}$",
+      "title": "Requester Address",
+      "type": "string"
+    },
+    "service_id": {
+      "maxLength": 200,
+      "minLength": 1,
+      "title": "Service Id",
+      "type": "string"
+    },
+    "signature": {
+      "pattern": "^0x[0-9a-fA-F]{130}$",
+      "title": "Signature",
+      "type": "string"
+    },
+    "signature_scheme": {
+      "const": "EIP712",
+      "title": "Signature Scheme",
+      "type": "string"
+    },
+    "spec_hash": {
+      "pattern": "^0x[0-9a-fA-F]{64}$",
+      "title": "Spec Hash",
+      "type": "string"
+    },
+    "task_id": {
+      "maxLength": 200,
+      "minLength": 1,
+      "title": "Task Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "commitment_version",
+    "commitment_id",
+    "task_id",
+    "spec_hash",
+    "requester_address",
+    "service_id",
+    "created_at",
+    "expires_at",
+    "signature_scheme",
+    "signature",
+    "anchor"
+  ],
+  "title": "TaskCommitment",
+  "type": "object",
+  "x-contract-invariants": [
+    "signature binds the immutable task hash and explicit application domain"
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "treasurytally-local": {
+      "command": "D:/HACKTHON/.venv/Scripts/python.exe",
+      "args": [
+        "-m",
+        "trust_receipt.mcp_server.cli",
+        "--config",
+        "D:/HACKTHON/docs/m16/mcp-workspaces.local.json"
+      ],
+      "cwd": "D:/HACKTHON"
+    }
+  }
+}

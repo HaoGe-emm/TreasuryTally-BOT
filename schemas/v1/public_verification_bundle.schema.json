@@ -1,0 +1,43 @@
+{
+  "$id": "urn:xinjv:schema:1.0:public-verification-bundle",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "bundle_hash": {
+      "pattern": "^0x[0-9a-fA-F]{64}$",
+      "title": "Bundle Hash",
+      "type": "string"
+    },
+    "bundle_version": {
+      "const": "1.0",
+      "title": "Bundle Version",
+      "type": "string"
+    },
+    "receipts": {
+      "items": {
+        "$ref": "urn:xinjv:schema:1.0:receipt"
+      },
+      "maxItems": 2,
+      "minItems": 1,
+      "title": "Receipts",
+      "type": "array"
+    },
+    "revisions": {
+      "items": {
+        "$ref": "urn:xinjv:schema:1.0:receipt-revision"
+      },
+      "maxItems": 2,
+      "minItems": 1,
+      "title": "Revisions",
+      "type": "array"
+    }
+  },
+  "required": [
+    "bundle_version",
+    "receipts",
+    "revisions",
+    "bundle_hash"
+  ],
+  "title": "PublicVerificationBundle",
+  "type": "object"
+}

@@ -1,0 +1,20 @@
+{
+  "schema_version": "1.0",
+  "claimed_total_base_units": "321794352787",
+  "claimed_count": 1,
+  "transfers": [
+    {
+      "chain_id": 11155111,
+      "token_address": "0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9",
+      "transaction_hash": "0x7cdd2a07fc41fc5ad4138fbc5047c67962cf9b69d80626c6bbb41bcc01e728b2",
+      "log_index": 61,
+      "block_number": 11855664,
+      "block_hash": "0xa34d4187a82b7db3d805d896b100403e634c0abdc7fa61756e05217369de8cb7",
+      "from_address": "0x0C88262f03B183DD183C2fC7A78578dBcE1e664C",
+      "to_address": "0x3dea9a7d55beA23D193B9308a7e85E6A2a9a6364",
+      "amount_base_units": "321794352787",
+      "token_decimals": 18,
+      "source": "service"
+    }
+  ]
+}

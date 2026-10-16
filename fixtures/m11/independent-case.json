@@ -1,0 +1,31 @@
+{
+  "case_version": "1.0",
+  "case_id": "sepolia-weth-block-11855664-independent-event-61",
+  "title": "Independent Sepolia WETH task with a one-base-unit reporting error",
+  "disclosure": "Team-constructed reports over a different real public Sepolia event; no customer identity or authorization is claimed.",
+  "task_spec": "independent/task-spec.json",
+  "reports": {
+    "error": "independent/error-amount-mismatch.json",
+    "corrected": "independent/corrected-complete.json"
+  },
+  "reference_inventory": "reference-events.json",
+  "expected": {
+    "raw_event_count": 6,
+    "eligible_event_count": 1,
+    "calculated_total_base_units": "321794352786",
+    "token_decimals": 18,
+    "error_outcome": "FAIL",
+    "corrected_outcome": "PASS",
+    "eligible_event_keys": [
+      [11155111, "0x7cdd2a07fc41fc5ad4138fbc5047c67962cf9b69d80626c6bbb41bcc01e728b2", 61]
+    ]
+  },
+  "provenance": {
+    "network": "Sepolia",
+    "source": "rpc",
+    "observed_at": "2026-10-07T07:10:54.306364Z",
+    "minimum_confirmations": 2,
+    "block_explorer_transaction_url": "https://eth-sepolia.blockscout.com/tx/0x7cdd2a07fc41fc5ad4138fbc5047c67962cf9b69d80626c6bbb41bcc01e728b2",
+    "block_explorer_block_url": "https://eth-sepolia.blockscout.com/block/11855664"
+  }
+}

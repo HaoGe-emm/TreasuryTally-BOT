@@ -1,0 +1,302 @@
+{
+  "$defs": {
+    "EvidenceSource": {
+      "enum": [
+        "rpc",
+        "blockscout",
+        "service"
+      ],
+      "title": "EvidenceSource",
+      "type": "string"
+    },
+    "Finding": {
+      "additionalProperties": false,
+      "properties": {
+        "actual": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "$ref": "#/$defs/JsonValue"
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Actual"
+        },
+        "evidence_refs": {
+          "items": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Evidence Refs",
+          "type": "array"
+        },
+        "expected": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "$ref": "#/$defs/JsonValue"
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Expected"
+        },
+        "explanation": {
+          "minLength": 1,
+          "title": "Explanation",
+          "type": "string"
+        },
+        "finding_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Finding Id",
+          "type": "string"
+        },
+        "finding_type": {
+          "$ref": "#/$defs/FindingType"
+        },
+        "severity": {
+          "$ref": "#/$defs/FindingSeverity"
+        },
+        "status": {
+          "$ref": "#/$defs/FindingStatus"
+        },
+        "violated_rule": {
+          "minLength": 1,
+          "title": "Violated Rule",
+          "type": "string"
+        }
+      },
+      "required": [
+        "finding_id",
+        "finding_type",
+        "severity",
+        "expected",
+        "actual",
+        "violated_rule",
+        "evidence_refs",
+        "explanation",
+        "status"
+      ],
+      "title": "Finding",
+      "type": "object"
+    },
+    "FindingSeverity": {
+      "enum": [
+        "info",
+        "warning",
+        "error"
+      ],
+      "title": "FindingSeverity",
+      "type": "string"
+    },
+    "FindingStatus": {
+      "enum": [
+        "confirmed",
+        "hypothesis"
+      ],
+      "title": "FindingStatus",
+      "type": "string"
+    },
+    "FindingType": {
+      "enum": [
+        "MISSING_TRANSFER",
+        "EXTRA_TRANSFER",
+        "DUPLICATE_TRANSFER",
+        "EXCLUDED_INTERNAL_TRANSFER",
+        "OUT_OF_RANGE",
+        "WRONG_TOKEN",
+        "WRONG_DIRECTION",
+        "AMOUNT_MISMATCH",
+        "DECIMAL_ERROR",
+        "INSUFFICIENT_EVIDENCE"
+      ],
+      "title": "FindingType",
+      "type": "string"
+    },
+    "JsonValue": {},
+    "SourceDescriptor": {
+      "additionalProperties": false,
+      "properties": {
+        "complete": {
+          "title": "Complete",
+          "type": "boolean"
+        },
+        "details": {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "title": "Details",
+          "type": "object"
+        },
+        "retrieved_at": {
+          "format": "date-time",
+          "pattern": ".*(?:Z|[+-]00:00)$",
+          "title": "Retrieved At",
+          "type": "string"
+        },
+        "source": {
+          "$ref": "#/$defs/EvidenceSource"
+        },
+        "source_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Source Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "source",
+        "source_id",
+        "retrieved_at",
+        "complete",
+        "details"
+      ],
+      "title": "SourceDescriptor",
+      "type": "object"
+    },
+    "VerificationOutcome": {
+      "enum": [
+        "PASS",
+        "FAIL",
+        "INCONCLUSIVE"
+      ],
+      "title": "VerificationOutcome",
+      "type": "string"
+    }
+  },
+  "$id": "urn:xinjv:schema:1.0:verification-result",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "calculated_count": {
+      "anyOf": [
+        {
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Calculated Count"
+    },
+    "calculated_total_base_units": {
+      "anyOf": [
+        {
+          "pattern": "^(0|[1-9][0-9]*)$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Calculated Total Base Units"
+    },
+    "evidence_sufficient": {
+      "title": "Evidence Sufficient",
+      "type": "boolean"
+    },
+    "findings": {
+      "items": {
+        "$ref": "#/$defs/Finding"
+      },
+      "title": "Findings",
+      "type": "array"
+    },
+    "finished_at": {
+      "format": "date-time",
+      "pattern": ".*(?:Z|[+-]00:00)$",
+      "title": "Finished At",
+      "type": "string"
+    },
+    "inconclusive_reason": {
+      "anyOf": [
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Inconclusive Reason"
+    },
+    "outcome": {
+      "$ref": "#/$defs/VerificationOutcome"
+    },
+    "reference_complete": {
+      "title": "Reference Complete",
+      "type": "boolean"
+    },
+    "reference_sources": {
+      "items": {
+        "$ref": "#/$defs/SourceDescriptor"
+      },
+      "title": "Reference Sources",
+      "type": "array"
+    },
+    "run_id": {
+      "maxLength": 200,
+      "minLength": 1,
+      "title": "Run Id",
+      "type": "string"
+    },
+    "started_at": {
+      "format": "date-time",
+      "pattern": ".*(?:Z|[+-]00:00)$",
+      "title": "Started At",
+      "type": "string"
+    },
+    "submission_id": {
+      "maxLength": 200,
+      "minLength": 1,
+      "title": "Submission Id",
+      "type": "string"
+    },
+    "task_id": {
+      "maxLength": 200,
+      "minLength": 1,
+      "title": "Task Id",
+      "type": "string"
+    },
+    "verifier_version": {
+      "maxLength": 200,
+      "minLength": 1,
+      "title": "Verifier Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "run_id",
+    "task_id",
+    "submission_id",
+    "verifier_version",
+    "reference_sources",
+    "reference_complete",
+    "evidence_sufficient",
+    "calculated_total_base_units",
+    "calculated_count",
+    "findings",
+    "outcome",
+    "inconclusive_reason",
+    "started_at",
+    "finished_at"
+  ],
+  "title": "VerificationResult",
+  "type": "object",
+  "x-contract-invariants": [
+    "finished_at >= started_at",
+    "reference sources exclude service and preserve completeness",
+    "outcome follows evidence completeness and confirmed error findings"
+  ]
+}

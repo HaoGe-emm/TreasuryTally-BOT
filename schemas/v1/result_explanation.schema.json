@@ -1,0 +1,108 @@
+{
+  "$defs": {
+    "FindingExplanation": {
+      "additionalProperties": false,
+      "properties": {
+        "evidence_refs": {
+          "items": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Evidence Refs",
+          "type": "array"
+        },
+        "explanation": {
+          "minLength": 1,
+          "title": "Explanation",
+          "type": "string"
+        },
+        "finding_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Finding Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "finding_id",
+        "explanation",
+        "evidence_refs"
+      ],
+      "title": "FindingExplanation",
+      "type": "object"
+    },
+    "VerificationOutcome": {
+      "enum": [
+        "PASS",
+        "FAIL",
+        "INCONCLUSIVE"
+      ],
+      "title": "VerificationOutcome",
+      "type": "string"
+    }
+  },
+  "$id": "urn:xinjv:schema:1.0:result-explanation",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "calculated_count": {
+      "anyOf": [
+        {
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Calculated Count"
+    },
+    "calculated_total_base_units": {
+      "anyOf": [
+        {
+          "pattern": "^(0|[1-9][0-9]*)$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Calculated Total Base Units"
+    },
+    "finding_explanations": {
+      "items": {
+        "$ref": "#/$defs/FindingExplanation"
+      },
+      "title": "Finding Explanations",
+      "type": "array"
+    },
+    "outcome": {
+      "$ref": "#/$defs/VerificationOutcome"
+    },
+    "schema_version": {
+      "const": "1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "summary": {
+      "minLength": 1,
+      "title": "Summary",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema_version",
+    "outcome",
+    "calculated_total_base_units",
+    "calculated_count",
+    "summary",
+    "finding_explanations"
+  ],
+  "title": "ResultExplanation",
+  "type": "object",
+  "x-contract-invariants": [
+    "application validation binds values and finding references to VerificationResult"
+  ]
+}

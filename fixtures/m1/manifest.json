@@ -1,0 +1,131 @@
+{
+  "fixture_version": "1.0",
+  "fixtures": [
+    {
+      "fixture_id": "correct-basic",
+      "file": "cases/correct-basic.json",
+      "title": "Correct two-transfer report",
+      "tags": [
+        "correct",
+        "pass"
+      ],
+      "expected_outcome": "PASS"
+    },
+    {
+      "fixture_id": "correct-multi-log",
+      "file": "cases/correct-multi-log.json",
+      "title": "Correct report with two logs in one transaction",
+      "tags": [
+        "correct",
+        "pass",
+        "multi-log"
+      ],
+      "expected_outcome": "PASS"
+    },
+    {
+      "fixture_id": "missing-transfer-basic",
+      "file": "cases/missing-transfer-basic.json",
+      "title": "Report omits one eligible transfer",
+      "tags": [
+        "missing-transfer",
+        "fail"
+      ],
+      "expected_outcome": "FAIL"
+    },
+    {
+      "fixture_id": "missing-transfer-vertical-slice",
+      "file": "cases/missing-transfer-vertical-slice.json",
+      "title": "Vertical slice with internal transfer and omission",
+      "tags": [
+        "missing-transfer",
+        "internal-transfer",
+        "vertical-slice",
+        "fail"
+      ],
+      "expected_outcome": "FAIL"
+    },
+    {
+      "fixture_id": "duplicate-event-basic",
+      "file": "cases/duplicate-event-basic.json",
+      "title": "Exact duplicate event in report",
+      "tags": [
+        "duplicate-event",
+        "fail"
+      ],
+      "expected_outcome": "FAIL"
+    },
+    {
+      "fixture_id": "duplicate-event-shared-transaction",
+      "file": "cases/duplicate-event-shared-transaction.json",
+      "title": "Duplicate among distinct logs in one transaction",
+      "tags": [
+        "duplicate-event",
+        "multi-log",
+        "fail"
+      ],
+      "expected_outcome": "FAIL"
+    },
+    {
+      "fixture_id": "internal-transfer-basic",
+      "file": "cases/internal-transfer-basic.json",
+      "title": "Treasury internal movement counted as grant",
+      "tags": [
+        "internal-transfer",
+        "fail"
+      ],
+      "expected_outcome": "FAIL"
+    },
+    {
+      "fixture_id": "internal-transfer-reverse",
+      "file": "cases/internal-transfer-reverse.json",
+      "title": "Reverse-direction treasury movement counted",
+      "tags": [
+        "internal-transfer",
+        "fail"
+      ],
+      "expected_outcome": "FAIL"
+    },
+    {
+      "fixture_id": "out-of-range-event",
+      "file": "cases/out-of-range-event.json",
+      "title": "Report includes event after inclusive end block",
+      "tags": [
+        "block-range",
+        "fail"
+      ],
+      "expected_outcome": "FAIL"
+    },
+    {
+      "fixture_id": "decimal-unit-error",
+      "file": "cases/decimal-unit-error.json",
+      "title": "Base-unit amount scaled by an extra factor",
+      "tags": [
+        "decimal-error",
+        "amount-unit",
+        "fail"
+      ],
+      "expected_outcome": "FAIL"
+    },
+    {
+      "fixture_id": "hidden-combination-07",
+      "file": "cases/hidden-combination-07.json",
+      "title": "Hidden multi-error evaluation case",
+      "tags": [
+        "hidden-evaluation",
+        "multi-error",
+        "fail"
+      ],
+      "expected_outcome": "FAIL"
+    },
+    {
+      "fixture_id": "insufficient-evidence-page",
+      "file": "cases/insufficient-evidence-page.json",
+      "title": "Unknown pagination prevents a conclusion",
+      "tags": [
+        "insufficient-evidence",
+        "inconclusive"
+      ],
+      "expected_outcome": "INCONCLUSIVE"
+    }
+  ]
+}

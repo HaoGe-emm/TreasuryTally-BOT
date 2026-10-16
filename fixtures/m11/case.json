@@ -1,0 +1,35 @@
+{
+  "case_version": "1.0",
+  "case_id": "sepolia-weth-block-11855664-single-recipient",
+  "title": "Sepolia WETH single-recipient missing-transfer case",
+  "disclosure": "Team-constructed reports over real public Sepolia transactions; no customer identity or authorization is claimed.",
+  "task_spec": "task-spec.json",
+  "reports": {
+    "error": "reports/error-missing-transfer.json",
+    "corrected": "reports/corrected-complete.json"
+  },
+  "reference_inventory": "reference-events.json",
+  "expected": {
+    "raw_event_count": 6,
+    "eligible_event_count": 1,
+    "calculated_total_base_units": "180674489737",
+    "token_decimals": 18,
+    "error_outcome": "FAIL",
+    "corrected_outcome": "PASS",
+    "eligible_event_keys": [
+      [
+        11155111,
+        "0x0442da2dc2aa4e4557e648fe3a6fad49c43f5e9db89b36e156f1a790d3b64b6f",
+        128
+      ]
+    ]
+  },
+  "provenance": {
+    "network": "Sepolia",
+    "source": "rpc",
+    "observed_at": "2026-10-07T07:10:54.306364Z",
+    "minimum_confirmations": 2,
+    "block_explorer_transaction_url": "https://eth-sepolia.blockscout.com/tx/0x0442da2dc2aa4e4557e648fe3a6fad49c43f5e9db89b36e156f1a790d3b64b6f",
+    "block_explorer_block_url": "https://eth-sepolia.blockscout.com/block/11855664"
+  }
+}

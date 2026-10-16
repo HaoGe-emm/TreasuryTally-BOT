@@ -1,0 +1,134 @@
+{
+  "fixture_version": "1.0",
+  "fixture_id": "correct-basic",
+  "title": "Correct two-transfer report",
+  "tags": [
+    "correct",
+    "pass"
+  ],
+  "task_spec": {
+    "schema_version": "1.0",
+    "task_id": "m1-task-01",
+    "chain_id": 11155111,
+    "token_address": "0x0000000000000000000000000000000000001000",
+    "treasury_addresses": [
+      "0x0000000000000000000000000000000000002001",
+      "0x0000000000000000000000000000000000002002"
+    ],
+    "recipient_addresses": [
+      "0x0000000000000000000000000000000000003001",
+      "0x0000000000000000000000000000000000003002"
+    ],
+    "start_block": 1000,
+    "end_block": 1010,
+    "exclusion_rules": [
+      {
+        "rule_id": "exclude-treasury-internal",
+        "rule_type": "EXCLUDE_TREASURY_INTERNAL",
+        "reason": "Transfers between confirmed treasury accounts are not grants."
+      }
+    ],
+    "max_records": 200,
+    "confirmed_at": "2026-10-06T07:00:00Z",
+    "spec_hash": "0x0000000000000000000000000000000000000000000000000000000000030d41"
+  },
+  "submission": {
+    "schema_version": "1.0",
+    "submission_id": "m1-submission-01",
+    "task_id": "m1-task-01",
+    "service_id": "synthetic-report-service-a",
+    "service_version": "fixture-1.0",
+    "attempt": 1,
+    "claimed_total_base_units": "100000",
+    "claimed_count": 2,
+    "transfers": [
+      {
+        "chain_id": 11155111,
+        "token_address": "0x0000000000000000000000000000000000001000",
+        "transaction_hash": "0x0000000000000000000000000000000000000000000000000000000000000065",
+        "log_index": 0,
+        "block_number": 1001,
+        "block_hash": "0x0000000000000000000000000000000000000000000000000000000000018a89",
+        "from_address": "0x0000000000000000000000000000000000002001",
+        "to_address": "0x0000000000000000000000000000000000003001",
+        "amount_base_units": "40000",
+        "token_decimals": 6,
+        "source": "service"
+      },
+      {
+        "chain_id": 11155111,
+        "token_address": "0x0000000000000000000000000000000000001000",
+        "transaction_hash": "0x0000000000000000000000000000000000000000000000000000000000000066",
+        "log_index": 0,
+        "block_number": 1002,
+        "block_hash": "0x0000000000000000000000000000000000000000000000000000000000018a8a",
+        "from_address": "0x0000000000000000000000000000000000002001",
+        "to_address": "0x0000000000000000000000000000000000003002",
+        "amount_base_units": "60000",
+        "token_decimals": 6,
+        "source": "service"
+      }
+    ],
+    "report_text": "Synthetic M1 fixture report; no production or personal data.",
+    "created_at": "2026-10-06T07:15:00Z",
+    "report_hash": "0x00000000000000000000000000000000000000000000000000000000000493e1",
+    "signature": null
+  },
+  "reference": {
+    "sources": [
+      {
+        "source": "rpc",
+        "source_id": "fixture-rpc-01",
+        "retrieved_at": "2026-10-06T07:30:00Z",
+        "complete": true,
+        "details": {
+          "environment": "synthetic-test-data",
+          "range_inclusive": true
+        }
+      }
+    ],
+    "reference_complete": true,
+    "evidence_sufficient": true,
+    "transfers": [
+      {
+        "chain_id": 11155111,
+        "token_address": "0x0000000000000000000000000000000000001000",
+        "transaction_hash": "0x0000000000000000000000000000000000000000000000000000000000000065",
+        "log_index": 0,
+        "block_number": 1001,
+        "block_hash": "0x0000000000000000000000000000000000000000000000000000000000018a89",
+        "from_address": "0x0000000000000000000000000000000000002001",
+        "to_address": "0x0000000000000000000000000000000000003001",
+        "amount_base_units": "40000",
+        "token_decimals": 6,
+        "source": "rpc"
+      },
+      {
+        "chain_id": 11155111,
+        "token_address": "0x0000000000000000000000000000000000001000",
+        "transaction_hash": "0x0000000000000000000000000000000000000000000000000000000000000066",
+        "log_index": 0,
+        "block_number": 1002,
+        "block_hash": "0x0000000000000000000000000000000000000000000000000000000000018a8a",
+        "from_address": "0x0000000000000000000000000000000000002001",
+        "to_address": "0x0000000000000000000000000000000000003002",
+        "amount_base_units": "60000",
+        "token_decimals": 6,
+        "source": "rpc"
+      }
+    ],
+    "insufficiency_reason": null
+  },
+  "expected": {
+    "outcome": "PASS",
+    "calculated_total_base_units": "100000",
+    "calculated_count": 2,
+    "findings": []
+  },
+  "human_review": {
+    "summary": "The service reports the complete eligible transfer set.",
+    "calculation": "40000 + 60000 = 100000.",
+    "reviewer": "M1 fixture reviewer",
+    "verified_at": "2026-10-06T08:00:00Z"
+  }
+}

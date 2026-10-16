@@ -1,0 +1,87 @@
+{
+  "$defs": {
+    "FollowUpAction": {
+      "enum": [
+        "NO_ACTION",
+        "REFRESH_REFERENCE_EVIDENCE",
+        "CROSS_CHECK_REFERENCE_SOURCE",
+        "CONFIRM_TASK_SCOPE",
+        "REQUEST_RESUBMISSION",
+        "SWITCH_SERVICE",
+        "MANUAL_REVIEW"
+      ],
+      "title": "FollowUpAction",
+      "type": "string"
+    },
+    "FollowUpSuggestion": {
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "$ref": "#/$defs/FollowUpAction"
+        },
+        "evidence_refs": {
+          "items": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": "Evidence Refs",
+          "type": "array"
+        },
+        "rationale": {
+          "minLength": 1,
+          "title": "Rationale",
+          "type": "string"
+        }
+      },
+      "required": [
+        "action",
+        "rationale",
+        "evidence_refs"
+      ],
+      "title": "FollowUpSuggestion",
+      "type": "object"
+    },
+    "VerificationOutcome": {
+      "enum": [
+        "PASS",
+        "FAIL",
+        "INCONCLUSIVE"
+      ],
+      "title": "VerificationOutcome",
+      "type": "string"
+    }
+  },
+  "$id": "urn:xinjv:schema:1.0:follow-up-advice",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "outcome": {
+      "$ref": "#/$defs/VerificationOutcome"
+    },
+    "schema_version": {
+      "const": "1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "suggestions": {
+      "items": {
+        "$ref": "#/$defs/FollowUpSuggestion"
+      },
+      "maxItems": 5,
+      "minItems": 1,
+      "title": "Suggestions",
+      "type": "array"
+    }
+  },
+  "required": [
+    "schema_version",
+    "outcome",
+    "suggestions"
+  ],
+  "title": "FollowUpAdvice",
+  "type": "object",
+  "x-contract-invariants": [
+    "follow-up actions are restricted by deterministic outcome"
+  ]
+}

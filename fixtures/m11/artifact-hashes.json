@@ -1,0 +1,15 @@
+{
+  "inventory_version": "1.0",
+  "algorithm": "sha256",
+  "files": {
+    "case.json": "0x74717ef35ad62b41e3ed33d10652548ae885ff6b423e16ed3a9a8a54bee8b424",
+    "independent/corrected-complete.json": "0x5eae6754080563af6ebef809a4c7021177018770e42474fe76827d4d1619baee",
+    "independent/error-amount-mismatch.json": "0xddadcc12e330ad14b975809a53b54ee83549e703e09932f0dab3dba8f53d3bec",
+    "independent/task-spec.json": "0xd026eefe994266a8d7724ad42ccc5e81bd8e2df7878a5d1c1ff57ed64a2726cf",
+    "independent-case.json": "0xcc62da1a111c34605efe5b09f9931daec3a1bcf31a8c8a2e7e54fa9c486fbf67",
+    "reference-events.json": "0xa91da3e93da300ffb1bc0dc93fae9f1513500d46e35ed79a77d494248f58c780",
+    "reports/corrected-complete.json": "0xc7dbc77b832a6bfa0ed50eb16c15b48285b464802a297d393c74031082b71d6e",
+    "reports/error-missing-transfer.json": "0x307f840ef45c3085e33a8d06344075967b9e35c4924621799c85979fe7a8d4c2",
+    "task-spec.json": "0xa97ea3b85d0fa727dbb8e0d473075ac909d5302e75ba21d5230a70da39ce7897"
+  }
+}

@@ -1,0 +1,201 @@
+{
+  "fixture_version": "1.0",
+  "fixture_id": "hidden-combination-07",
+  "title": "Hidden multi-error evaluation case",
+  "tags": [
+    "hidden-evaluation",
+    "multi-error",
+    "fail"
+  ],
+  "task_spec": {
+    "schema_version": "1.0",
+    "task_id": "m1-task-11",
+    "chain_id": 11155111,
+    "token_address": "0x0000000000000000000000000000000000001000",
+    "treasury_addresses": [
+      "0x0000000000000000000000000000000000002001",
+      "0x0000000000000000000000000000000000002002"
+    ],
+    "recipient_addresses": [
+      "0x0000000000000000000000000000000000003001",
+      "0x0000000000000000000000000000000000003002"
+    ],
+    "start_block": 1000,
+    "end_block": 1010,
+    "exclusion_rules": [
+      {
+        "rule_id": "exclude-treasury-internal",
+        "rule_type": "EXCLUDE_TREASURY_INTERNAL",
+        "reason": "Transfers between confirmed treasury accounts are not grants."
+      }
+    ],
+    "max_records": 200,
+    "confirmed_at": "2026-10-06T07:00:00Z",
+    "spec_hash": "0x0000000000000000000000000000000000000000000000000000000000030d4b"
+  },
+  "submission": {
+    "schema_version": "1.0",
+    "submission_id": "m1-submission-11",
+    "task_id": "m1-task-11",
+    "service_id": "synthetic-report-service-a",
+    "service_version": "fixture-1.0",
+    "attempt": 1,
+    "claimed_total_base_units": "46000",
+    "claimed_count": 3,
+    "transfers": [
+      {
+        "chain_id": 11155111,
+        "token_address": "0x0000000000000000000000000000000000001000",
+        "transaction_hash": "0x000000000000000000000000000000000000000000000000000000000000044d",
+        "log_index": 0,
+        "block_number": 1001,
+        "block_hash": "0x0000000000000000000000000000000000000000000000000000000000018a89",
+        "from_address": "0x0000000000000000000000000000000000002001",
+        "to_address": "0x0000000000000000000000000000000000003001",
+        "amount_base_units": "21000",
+        "token_decimals": 6,
+        "source": "service"
+      },
+      {
+        "chain_id": 11155111,
+        "token_address": "0x0000000000000000000000000000000000001000",
+        "transaction_hash": "0x000000000000000000000000000000000000000000000000000000000000044d",
+        "log_index": 0,
+        "block_number": 1001,
+        "block_hash": "0x0000000000000000000000000000000000000000000000000000000000018a89",
+        "from_address": "0x0000000000000000000000000000000000002001",
+        "to_address": "0x0000000000000000000000000000000000003001",
+        "amount_base_units": "21000",
+        "token_decimals": 6,
+        "source": "service"
+      },
+      {
+        "chain_id": 11155111,
+        "token_address": "0x0000000000000000000000000000000000001000",
+        "transaction_hash": "0x000000000000000000000000000000000000000000000000000000000000044f",
+        "log_index": 0,
+        "block_number": 999,
+        "block_hash": "0x0000000000000000000000000000000000000000000000000000000000018a87",
+        "from_address": "0x0000000000000000000000000000000000002001",
+        "to_address": "0x0000000000000000000000000000000000003001",
+        "amount_base_units": "4000",
+        "token_decimals": 6,
+        "source": "service"
+      }
+    ],
+    "report_text": "Synthetic M1 fixture report; no production or personal data.",
+    "created_at": "2026-10-06T07:15:00Z",
+    "report_hash": "0x00000000000000000000000000000000000000000000000000000000000493eb",
+    "signature": null
+  },
+  "reference": {
+    "sources": [
+      {
+        "source": "rpc",
+        "source_id": "fixture-rpc-11",
+        "retrieved_at": "2026-10-06T07:30:00Z",
+        "complete": true,
+        "details": {
+          "environment": "synthetic-test-data",
+          "range_inclusive": true
+        }
+      }
+    ],
+    "reference_complete": true,
+    "evidence_sufficient": true,
+    "transfers": [
+      {
+        "chain_id": 11155111,
+        "token_address": "0x0000000000000000000000000000000000001000",
+        "transaction_hash": "0x000000000000000000000000000000000000000000000000000000000000044d",
+        "log_index": 0,
+        "block_number": 1001,
+        "block_hash": "0x0000000000000000000000000000000000000000000000000000000000018a89",
+        "from_address": "0x0000000000000000000000000000000000002001",
+        "to_address": "0x0000000000000000000000000000000000003001",
+        "amount_base_units": "21000",
+        "token_decimals": 6,
+        "source": "rpc"
+      },
+      {
+        "chain_id": 11155111,
+        "token_address": "0x0000000000000000000000000000000000001000",
+        "transaction_hash": "0x000000000000000000000000000000000000000000000000000000000000044e",
+        "log_index": 0,
+        "block_number": 1002,
+        "block_hash": "0x0000000000000000000000000000000000000000000000000000000000018a8a",
+        "from_address": "0x0000000000000000000000000000000000002001",
+        "to_address": "0x0000000000000000000000000000000000003002",
+        "amount_base_units": "9000",
+        "token_decimals": 6,
+        "source": "rpc"
+      },
+      {
+        "chain_id": 11155111,
+        "token_address": "0x0000000000000000000000000000000000001000",
+        "transaction_hash": "0x000000000000000000000000000000000000000000000000000000000000044f",
+        "log_index": 0,
+        "block_number": 999,
+        "block_hash": "0x0000000000000000000000000000000000000000000000000000000000018a87",
+        "from_address": "0x0000000000000000000000000000000000002001",
+        "to_address": "0x0000000000000000000000000000000000003001",
+        "amount_base_units": "4000",
+        "token_decimals": 6,
+        "source": "rpc"
+      }
+    ],
+    "insufficiency_reason": null
+  },
+  "expected": {
+    "outcome": "FAIL",
+    "calculated_total_base_units": "30000",
+    "calculated_count": 2,
+    "findings": [
+      {
+        "finding_type": "DUPLICATE_TRANSFER",
+        "severity": "error",
+        "status": "confirmed",
+        "violated_rule": "event keys must be unique within a submission",
+        "event_keys": [
+          [
+            11155111,
+            "0x000000000000000000000000000000000000000000000000000000000000044d",
+            0
+          ]
+        ]
+      },
+      {
+        "finding_type": "MISSING_TRANSFER",
+        "severity": "error",
+        "status": "confirmed",
+        "violated_rule": "service transfer set must include every eligible reference event",
+        "event_keys": [
+          [
+            11155111,
+            "0x000000000000000000000000000000000000000000000000000000000000044e",
+            0
+          ]
+        ]
+      },
+      {
+        "finding_type": "OUT_OF_RANGE",
+        "severity": "error",
+        "status": "confirmed",
+        "violated_rule": "events before start_block are outside the task scope",
+        "event_keys": [
+          [
+            11155111,
+            "0x000000000000000000000000000000000000000000000000000000000000044f",
+            0
+          ]
+        ]
+      }
+    ]
+  },
+  "human_review": {
+    "summary": "Manual review confirms one duplicate, one omitted eligible event, and one pre-range event.",
+    "calculation": "Eligible reference total is 21000 + 9000 = 30000; the block-999 event is excluded.",
+    "reviewer": "M1 fixture reviewer",
+    "verified_at": "2026-10-06T08:00:00Z"
+  }
+}
