@@ -92,3 +92,9 @@ export async function POST(request: Request) {
       { status: 422, headers: responseHeaders });
   }
 }
+
+export async function GET() {
+  const enabled = process.env.NODE_ENV === "development" && await localSignatureApprovalEnabled();
+  return Response.json({ signatureRequestEnabled: enabled, scope: "LOCAL_DEVELOPMENT_ONLY" },
+    { headers: { "Cache-Control": "no-store" } });
+}

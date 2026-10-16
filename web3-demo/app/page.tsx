@@ -16,8 +16,6 @@ import { parseTaskSpec, requireBotContext, sha256, taskDigest, taskDomain, taskT
 
 const mainnetWritesEnabled = process.env.NODE_ENV === "development" &&
   process.env.NEXT_PUBLIC_ENABLE_MAINNET_WRITES === "true";
-const taskSignaturesEnabled = process.env.NODE_ENV === "development" &&
-  process.env.NEXT_PUBLIC_ENABLE_TASK_SIGNATURES === "true";
 const samplePath = "/demo-task-spec.json";
 const confirmedDemoPath = "/bot677-demo/task-spec.json";
 type Preview = { task: TaskSpec; hash: Hex; label: string };
@@ -27,6 +25,7 @@ type AnchorQuote = { digest: Hex; gas: bigint; gasLimit: bigint; gasPrice: bigin
   maxFee: bigint; balance: bigint; nonce: number; createdAt: number };
 type AnchorRecord = { digest: Hex; hash: Hex; block: string; fee: string };
 const intentKey = "treasurytally-bot677-demo-anchor-intent-v1";
+const signatureAttemptKey = `treasurytally:task-sign-requested:${confirmedDemo.typedDataDigest}`;
 const zeroAddress = "0x0000000000000000000000000000000000000000";
 const reviewedMessage: TaskCommitmentMessage = {
   ...signingPreview.message,
@@ -110,6 +109,8 @@ export default function Home() {
   const [signed, setSigned] = useState<Signed | null>(null);
   const pendingSignature = useRef<Hex | null>(null);
   const [pendingSignatureAvailable, setPendingSignatureAvailable] = useState(false);
+  const [taskSignaturesEnabled, setTaskSignaturesEnabled] = useState(false);
+  const [signRequestAttempted, setSignRequestAttempted] = useState(false);
   const [prepared, setPrepared] = useState<Prepared | null>(null);
   const [contractStatus, setContractStatus] = useState("尚未部署");
   const [busy, setBusy] = useState(false);
@@ -120,6 +121,18 @@ export default function Home() {
   const [anchorIntent, setAnchorIntent] = useState<{ digest: Hex; hash?: Hex } | null>(null);
 
   useEffect(() => collectWallets(setWallets), []);
+  useEffect(() => {
+    let active = true;
+    void fetch("/api/verify-signed-demo", { cache: "no-store" })
+      .then(response => response.json())
+      .then(result => { if (active) setTaskSignaturesEnabled(result.signatureRequestEnabled === true); })
+      .catch(() => { if (active) setTaskSignaturesEnabled(false); });
+    return () => { active = false; };
+  }, []);
+  useEffect(() => {
+    try { setSignRequestAttempted(sessionStorage.getItem(signatureAttemptKey) === "true"); }
+    catch { setSignRequestAttempted(false); }
+  }, []);
   const refreshRpc = useCallback(async () => {
     setRpcChainId(null);
     try { setRpcChainId(await publicClient.getChainId()); }
@@ -286,6 +299,10 @@ export default function Home() {
         throw new Error("服务选择已变化，请重新准备承诺");
       const message = prepared.message;
       const wallet = createWalletClient({ account: address, chain: botChain, transport: custom(provider) });
+      // This fixed Demo only allows one wallet prompt per browser tab. The marker
+      // stores no signature and remains set even if the user rejects the prompt.
+      sessionStorage.setItem(signatureAttemptKey, "true");
+      setSignRequestAttempted(true);
       const signature = await wallet.signTypedData({
         domain: taskDomain, types: taskTypes, primaryType: "TaskCommitment", message
       });
@@ -516,10 +533,11 @@ export default function Home() {
         <button className="secondary" onClick={prepareTask} disabled={!readyToSign || busy}>准备任务承诺</button>
         {prepared && <div className="preview"><h3>待签消息已与审阅文件核对</h3><pre>{JSON.stringify(reviewedTypedData, null, 2)}</pre>
           <p className="hint">服务签名者 {prepared.serviceSigner} 不属于上游任务签名字段；本地应用规则将它与内部 Demo 服务绑定，原合约不验证此授权。</p>
-          <button onClick={signTask} disabled={busy || !taskSignaturesEnabled || pendingSignatureAvailable}>签署 EIP-712 任务承诺</button>
+          <button onClick={signTask} disabled={busy || !taskSignaturesEnabled || pendingSignatureAvailable || signRequestAttempted || !!signed}>签署 EIP-712 任务承诺</button>
           {pendingSignatureAvailable && <button className="secondary" onClick={retryPythonVerification} disabled={busy}>
             重试本地 Python 交叉校验（不请求新签名）</button>}
           {pendingSignatureAvailable && <p className="hint">此标签页内存暂存签名，仅用于本地交叉校验；不会写入存储或日志。请勿刷新或关闭页面。</p>}
+          {signRequestAttempted && !signed && !pendingSignatureAvailable && <p className="hint">此标签页已发起过一次 MetaMask 签名请求，不会自动重发。若请求被拒绝或校验失败，请先停止并联系项目维护者。</p>}
           {!taskSignaturesEnabled && <p className="hint">任务签名安全锁已启用；尚未请求 MetaMask 签名。</p>}</div>}
         {signed && <dl className="facts signed"><div><dt>签名者 / 请求者</dt><dd>{signed.message.requester}</dd></div>
           <div><dt>登记的服务签名者</dt><dd>{signed.serviceSigner}</dd></div>
