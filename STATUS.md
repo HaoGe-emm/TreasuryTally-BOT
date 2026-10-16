@@ -1284,3 +1284,18 @@ M10 已在独立交付分支接入 M8+M9 工作区与页面并完成本地验收
 - 这里只记录当前事实、下一步和实际阻塞。
 - 完成某阶段时更新本文件，不在多个设计文档重复维护进度。
 - 每项“已完成”必须能对应文件、命令输出、测试记录或外部交易。
+
+## BOT Chain 独立开发阶段 1（2026-10-16）
+
+- 独立目录 `D:\TreasuryTally-BOT`，分支 `bot-chain-phase1`。标准 clone 网络失败后取得固定 SHA 完整 GitHub 源码归档，443 个 Git Blob 全部校验一致；本地快照不是上游 Git 历史。来源、署名及用户提供的专门授权记录在 SOURCE_AND_AUTHORIZATION.md。
+- 新增 web3-demo：Next.js 16.4.2、React 19.3.1、viem 2.57.7；EIP-6963 与注入回退发现钱包、主动连接/断开、账户及网络事件、拒绝授权提示、677 切换及 4902 添加网络、账户/RPC/TaskSpec 身份核对。
+- 新增 TaskSpec 导入/原模型导出、完整范围及签署前预览、上游规范化 SHA-256、EIP-712 恢复和完整 TaskCommitment digest。UTC JSON 与 EIP-712 时间格式及微秒精度分别与原 Python 对齐。服务签名者仍沿用原规则由 anchorTask 登记，未修改上游签名字段。
+- `npm run typecheck`、`npm run test:unit`、`npm run build` 均通过。钱包发现、切网和拒绝测试使用 provider 测试替身；未实测真实 MetaMask/OKX 扩展或真实钱包签名。
+- 桌面和 390px 移动端实际浏览器验证通过；公开 Sepolia Demo 原 spec_hash 核对一致、原链标签清晰、无钱包提示和主网按钮禁用可见。浏览器从官方 RPC 读回 Chain ID 677。终端直接 RPC 连接超时；不将终端失败映射为主网成功。
+- 原哈希/承诺/锚读取相关 pytest 为 18 passed。未运行全仓所有无关业务及外部服务测试。
+- local-evm 使用精确 solc 0.8.30、paris、optimizer 200，在 Merge 本地 chain 1337 完成真实本地部署、anchorTask/anchorDelivery 交易、事件与存储读回、字节码核对、重复/未授权/非法输入回滚和错误链拒绝。原 scripts/check_m8_anchor_local.py 也执行通过。
+- viem 任务/交付向量通过未修改的原 Python 模型、hashing/eip712 复核，篡改请求者、链与范围拒绝。公开样例任务未被改标成 BOT 主网任务。
+- 前端生产依赖 npm audit：0 个已知漏洞；隔离 Python 测试环境 pip check 无依赖冲突，新增 Python 脚本 Ruff 通过。Ganache 旧依赖仅留在独立本地工具目录，风险与合约边界见 docs/bot/contract-review.md。
+- 现有源文件大小门禁通过；新增生成目录排除及两个标准 npm 锁文件白名单，业务源码 1000 行限制保留。扫描 486 个源码/文本文档未发现所检查的高置信凭据字面量。
+- CommitmentAnchor.sol 源文件与上游一致；主网地址为空，主网写入关闭、安全锁保持启用。本轮主网部署 0、主网写交易 0、真实钱包主网交易签名 0、GitHub push 0、Vercel 发布 0。
+- 待检查/下一阶段：真实 BOT 已确认任务、服务签名者来源审阅、真实钱包桌面/移动端验收、BOT 目标 EVM 进一步核实、分项批准后的部署/钱包交易/代码推送/网站发布。当前不满足比赛最终主网交付，不能将本地交易用于主网验收。

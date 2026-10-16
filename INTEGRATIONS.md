@@ -254,3 +254,18 @@ M16 复用项目现有 `mcp==1.26.0`，不新增依赖或修改 lock。实现按
 ```
 
 如果缺少密钥、测试币、合约地址或已知测试资产，该命令应明确报告阻塞项。跳过或 mock 通过不能视为 M0 完成。
+
+## BOT Chain 独立候选集成（阶段 1）
+
+| 参数 | 配置 |
+|---|---|
+| Network | BOT Chain Mainnet |
+| Chain ID | 677 / 0x2a5 |
+| RPC | https://rpc.botchain.ai |
+| Gas token | BOT，18 decimals |
+| Explorer | https://scan.botchain.ai |
+
+官方配置来源：https://dev-docs.botchain.ai/docs/Developers/quick-guide/ 。
+钱包身份信息通过 EIP-6963 公告与注入 provider 获取；名称属于钱包自报信息，不能据此声称扩展已通过身份认证。
+连接、添加网络和切网均由用户点击触发。成功标签必须来自 eth_chainId/eth_accounts 与独立 RPC 实际响应，RPC 失败保持阻塞。
+主网候选地址和 runtime SHA-256 默认为空，不配置或伪造主网地址。未知交易保留已提交状态，禁止自动重发。

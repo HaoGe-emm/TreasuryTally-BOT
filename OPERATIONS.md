@@ -492,3 +492,21 @@ XLSX 金额及声明总额必须为文本；原声明即使错误也不改写，
 `recognition-provenance/`，含内容哈希、原文件名、模型模式/固定标识、实际角色、映射、用户补充和派生字段。
 旧 `conversion-*` 文件不删除；来源记录不包含密钥，也不是原作者签名。
 保留与正式提交没有跨文件事务；失败可能留下内容寻址的私有孤立文件，但不会自动签名、上传公开文件或覆盖历史交付。
+
+## BOT Chain 独立本地开发（阶段 1）
+
+工作目录为 `D:\TreasuryTally-BOT`，前端启动：
+
+```powershell
+cd D:\TreasuryTally-BOT\web3-demo
+npm ci --ignore-scripts
+npm run dev
+```
+
+默认地址 http://127.0.0.1:3000 。不需要真实 .env、私钥、API key 或数据库。
+检查命令为 `npm run typecheck`、`npm run test:unit`、`npm run build`。
+独立本地 EVM：在 `local-evm` 运行 `npm ci --ignore-scripts` 与 `npm test`。
+Python 验证可建立独立 Python >=3.12 环境并安装 scripts/bot/requirements-test.txt，之后执行 scripts/bot/check_vectors.py。
+导出既有 BOT 任务：`python scripts/bot/export_task.py --task <confirmed-task.json> --out <output-directory>`，默认要求 chain 677，不重写范围或补造哈希。
+演示源链任务必须显式提供 `--expected-chain-id 11155111 --demo`，不能用于 BOT 主网提交。
+主网部署、钱包主网交易、GitHub push 和 Vercel 发布须后续分别批准。没有生产服务器操作步骤或生产凭据。

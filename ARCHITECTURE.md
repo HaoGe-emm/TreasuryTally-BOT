@@ -245,3 +245,11 @@ Streamlit 定位为链上报表验收工具，而不是开发工作台。首屏�
 页面使用宽布局，但关键内容以卡片和可换行字段呈现，不依赖宽表格。桌面端允许资金流与问题列表并排；760px 及以下强制
 折叠为单列，按钮占满可用宽度，长哈希与 JSON 可换行或横向滚动。资金流颜色不能是唯一语义，还必须配合图标、文本和
 可访问标签。页面响应式和交互属于 `app/`；业务报告的只读展示与本地渲染 adapter 属于 `reporting/`，不会进入领域层。
+
+## BOT Chain 独立前端边界（阶段 1）
+
+`web3-demo/` 是独立 Next.js/TypeScript/viem 浏览器客户端，不持有服务器钱包、数据库或报告正文。
+`scripts/bot/export_task.py` 通过原 TaskSpec 模型及 task_spec_hash 导出规范化公开任务与哈希依据，不修改任务范围。
+客户端导入、哈希和签名恢复在浏览器完成；`scripts/bot/check_vectors.py` 以原 Python 实现交叉复核。
+`local-evm/` 单独管理 solc/Ganache 与本地测试产物，不属于前端的部署依赖。
+BOT 主网适配器只接受经过审阅的地址和 runtime SHA-256；所有主网写入需要后续独立批准。

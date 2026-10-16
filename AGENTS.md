@@ -64,3 +64,9 @@ last-reviewed: 2026-10-06
 - 不把 `references/` 中的代码当作本项目已实现能力。
 - 不为通过测试而降低金额精度、跳过分页或将未知状态映射为成功。
 - 不运行会自动大规模升级上游依赖的修复命令，尤其是参考仓库中的 `npm audit fix`。
+
+## BOT Chain 独立分支的生成文件边界
+
+在 `D:\TreasuryTally-BOT` 中继续保持业务源文件 1000 个物理行的限制。
+`node_modules/`、`.next/` 为自动生成的依赖或构建目录，不属于业务源码。
+仅 `web3-demo/package-lock.json` 与 `local-evm/package-lock.json` 两个 npm 自动生成的依赖锁文件不参与该行数限制；保留标准格式和完整 integrity，不得压缩锁文件规避检查。

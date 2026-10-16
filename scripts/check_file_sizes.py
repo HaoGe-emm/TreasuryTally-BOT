@@ -24,6 +24,7 @@ SCOPED_SUFFIXES = {
 EXCLUDED_PARTS = {
     ".code-review-graph",
     ".git",
+    ".next",
     ".playwright-cli",
     ".pytest_cache",
     ".ruff_cache",
@@ -31,7 +32,12 @@ EXCLUDED_PARTS = {
     ".venv",
     ".venv-blockscout",
     "data",
+    "node_modules",
     "references",
+}
+GENERATED_LOCKFILES = {
+    Path("local-evm/package-lock.json"),
+    Path("web3-demo/package-lock.json"),
 }
 
 
@@ -42,6 +48,8 @@ def main() -> int:
         if not path.is_file() or path.suffix.lower() not in SCOPED_SUFFIXES:
             continue
         if any(part in EXCLUDED_PARTS for part in relative.parts):
+            continue
+        if relative in GENERATED_LOCKFILES:
             continue
         if relative.parts[:2] == ("receipts", "private"):
             continue

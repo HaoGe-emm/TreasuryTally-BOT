@@ -756,3 +756,13 @@ view 包含 spec/receipt hash；worker binding 是上述两个哈希拼接字符
 - 分页完成条件由数据适配器显式报告；未知分页状态不能视为完整。
 - 区块范围两端均包含在内。
 - 超过 200 条相关事件时不抽样通过，返回需要分段的明确状态。
+
+## BOT Chain 前端互通约定（阶段 1）
+
+继续使用原 TaskSpec、TaskCommitment、ServiceSubmission、DeliveryCommitment，未新增或改变上游签名字段。
+TaskSpec JSON 先按原模型规范化：UTC 时间输出 Z，有微秒时保留六位；计算 spec_hash 时排除 spec_hash。
+任务 EIP-712 时间使用 Python datetime.isoformat 对应的 +00:00 格式，有微秒时六位，空 expiresAt 使用空字符串。
+taskDigest = stable_hash({message: _task_message(commitment), chain_id: commitment.anchor.chain_id, signature: commitment.signature})。
+serviceIdHash/submissionIdHash 为文本 UTF-8 原字节 SHA-256。完整交付摘要为 stable_hash(DeliveryCommitment)。
+原模型要求任务证据链与承诺 anchor.chain_id 一致，故本分支不将 Sepolia TaskSpec 直接登记到 BOT。
+serviceSigner 由 anchorTask 参数绑定，未加入原 TaskCommitment 的离线签名字段；详见 docs/bot/contract-review.md。

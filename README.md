@@ -106,3 +106,16 @@ Finding、受限解释与本地回执预览。工作区 ID 可在进程重启后
 3. 任务确认后必须固定范围并计算指纹，不能在执行中静默改变。
 4. 每次服务交付分别留档，后一次成功不能覆盖前一次失败。
 5. 公开前必须脱敏并获得授权；提交交易不等于链上确认。
+
+## BOT Chain 独立版入口
+
+独立 Web3 页面位于 `web3-demo/`：
+
+```powershell
+cd D:\TreasuryTally-BOT\web3-demo
+npm run dev
+```
+
+浏览器打开 http://127.0.0.1:3000 。首次安装使用 `npm ci --ignore-scripts`。
+来源与授权见 [SOURCE_AND_AUTHORIZATION.md](SOURCE_AND_AUTHORIZATION.md)，运行说明见 [OPERATIONS.md](OPERATIONS.md)，候选合约边界见 [docs/bot/contract-review.md](docs/bot/contract-review.md)。
+阶段状态只以 [STATUS.md](STATUS.md) 为准。

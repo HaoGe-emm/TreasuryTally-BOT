@@ -1,0 +1,10 @@
+# Phase 1 verification subset, versions retained from upstream requirements.lock.txt.
+web3==7.13.0
+eth-account==0.14.0
+pydantic==2.13.5
+httpx==0.28.1
+mcp==1.26.0
+pytest==9.1.1
+jsonschema==4.26.0
+python-dotenv==1.2.4
+ruff==0.16.10

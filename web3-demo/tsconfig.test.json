@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "module": "commonjs", "moduleResolution": "node", "noEmit": false,
+    "outDir": ".tmp/test-lib", "incremental": false, "isolatedModules": false
+  },
+  "include": ["lib/task.ts", "lib/chain.ts", "lib/wallet.ts"],
+  "exclude": ["node_modules"]
+}

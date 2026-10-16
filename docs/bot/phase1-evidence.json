@@ -1,0 +1,91 @@
+{
+  "date": "2026-10-16",
+  "timezone": "Asia/Shanghai",
+  "stage": "local phase 1",
+  "project": "D:\\TreasuryTally-BOT",
+  "branch": "bot-chain-phase1",
+  "local_source_snapshot_commit": "ef47a7f8e1279becbf9a3b852d6f57de2dd9f130",
+  "source": {
+    "repository": "https://github.com/CH-ZHOU-0512/TreasuryTally",
+    "sha": "f5efc9cf9b1a5860bc824d176d3a92407e96b495",
+    "method": "fixed-SHA complete source archive; not a Git history clone",
+    "git_blob_files_verified": 443,
+    "git_blob_mismatches": 0,
+    "skill_repository": "https://github.com/CH-ZHOU-0512/TreasuryTallySkill",
+    "skill_sha": "c128dab79e39f0df87e6013ed25b15f4e8765a45"
+  },
+  "frontend": {
+    "dependencies": {
+      "next": "16.4.2",
+      "react": "19.3.1",
+      "react-dom": "19.3.1",
+      "viem": "2.57.7"
+    },
+    "typecheck": "passed",
+    "build": "passed",
+    "unit_protocol_tests": "passed, mocked EIP-1193/EIP-6963 providers only",
+    "desktop_browser": "passed",
+    "mobile_viewport": {
+      "width": 390,
+      "height": 844,
+      "horizontal_overflow": false
+    },
+    "real_wallet_extensions_tested": false,
+    "mainnet_writes_enabled": false
+  },
+  "network": {
+    "configured_chain_id": 677,
+    "rpc": "https://rpc.botchain.ai",
+    "browser_rpc_chain_id_observed": 677,
+    "terminal_rpc_probe": "connect timeout",
+    "wallet_switch_add": "implemented; protocol test doubles passed"
+  },
+  "source_python_tests": {
+    "selected_pytest_passed": 18,
+    "full_suite_run": false,
+    "upstream_m8_local_script": "passed",
+    "viem_python_vectors": "passed",
+    "ruff_new_python": "passed",
+    "isolated_pip_check": "no broken requirements",
+    "source_file_size_gate": "passed",
+    "credential_literal_scan_files": 486,
+    "credential_literal_scan_findings": 0
+  },
+  "local_evm_only": {
+    "chain_id": 1337,
+    "hardfork": "merge",
+    "evm_target": "paris",
+    "compiler": "0.8.30+commit.73712a01.Emscripten.clang",
+    "optimizer_runs": 200,
+    "runtime_sha256": "0xe19c6b11680cbd60c5fb6061d52052c65596e48b9c10cbc59415538e03a75eaf",
+    "task_spec_hash": "0xd1329ea9f9c5d3cd3b2819a20e12547bf83afe8314cbce75a5dde60354277956",
+    "task_commitment_digest": "0xa751d2b104ee42b5eff93c40dbe97c989594318510d5ac75c4c03cfedda9b524",
+    "delivery_commitment_digest": "0x73b65a12552181a5f732c2ee889218f2565dbf06d02b88b47d92a04efd7c1a42",
+    "deployment_task_delivery_receipts": "success",
+    "task_delivery_events_and_storage": "verified",
+    "duplicates_unauthorized_invalid_input": "reverted",
+    "wrong_network": "rejected",
+    "financial_verification_result": null
+  },
+  "production_dependency_audit": {
+    "info": 0,
+    "low": 0,
+    "moderate": 0,
+    "high": 0,
+    "critical": 0,
+    "total": 0
+  },
+  "mainnet": {
+    "contract_address": null,
+    "contract_deployments": 0,
+    "write_transactions": 0,
+    "real_wallet_transaction_signatures_requested": 0,
+    "financial_verification_claim": false
+  },
+  "publication": {
+    "new_github_remote_repository": null,
+    "github_pushes": 0,
+    "vercel_publications": 0,
+    "public_site": null
+  }
+}
