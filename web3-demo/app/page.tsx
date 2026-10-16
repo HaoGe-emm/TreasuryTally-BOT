@@ -60,6 +60,41 @@ function requireReviewedSigningPreview(): void {
     throw new Error("签名前消息与已审核的 BOT Demo EIP-712 预览不一致");
 }
 
+async function verifySignatureWithPython(
+  signature: Hex, message: TaskCommitmentMessage, specHash: Hex,
+  serviceIdHash: Hex, serviceSigner: Address
+): Promise<Hex> {
+  if (!(await verifySignature(message, signature)))
+    throw new Error("TypeScript 无法将钱包签名恢复到 Requester");
+  const digest = await taskDigest(message, signature);
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 8_000);
+  try {
+    const response = await fetch("/api/verify-signed-demo", { method: "POST",
+      headers: { "content-type": "application/json" }, body: JSON.stringify({ signature }),
+      signal: controller.signal, cache: "no-store" });
+    const result = await response.json().catch(() => ({})) as Record<string, unknown>;
+    if (!response.ok) {
+      const reason = typeof result.error === "string" ? result.error : "本地校验接口返回非成功状态。";
+      if (response.status === 403)
+        throw new Error(`HTTP 403：签名未送入 Python；${reason}`);
+      if (response.status === 422)
+        throw new Error(`HTTP 422：Python 已运行但拒绝签名；${reason}`);
+      throw new Error(`本地签名校验接口 HTTP ${response.status}：${reason}`);
+    }
+    const check = result as { requester?: string; taskDigest?: string; specHash?: string;
+      serviceIdHash?: string; serviceSigner?: string; typedDataDigest?: string; scope?: string };
+    if (check.scope !== "LOCAL_PYTHON_SIGNATURE_CHECK_ONLY" ||
+        check.requester?.toLowerCase() !== message.requester.toLowerCase() ||
+        check.taskDigest !== digest || check.specHash !== specHash ||
+        check.serviceIdHash !== serviceIdHash ||
+        check.serviceSigner?.toLowerCase() !== serviceSigner.toLowerCase() ||
+        check.typedDataDigest !== confirmedDemo.typedDataDigest)
+      throw new Error("Python 与 TypeScript 的签名者、任务摘要或绑定字段不一致");
+    return digest;
+  } finally { clearTimeout(timer); }
+}
+
 export default function Home() {
   const [wallets, setWallets] = useState<WalletChoice[]>([]);
   const [choiceId, setChoiceId] = useState("");
@@ -73,6 +108,8 @@ export default function Home() {
   const [serviceId, setServiceId] = useState("");
   const [serviceSigner, setServiceSigner] = useState("");
   const [signed, setSigned] = useState<Signed | null>(null);
+  const pendingSignature = useRef<Hex | null>(null);
+  const [pendingSignatureAvailable, setPendingSignatureAvailable] = useState(false);
   const [prepared, setPrepared] = useState<Prepared | null>(null);
   const [contractStatus, setContractStatus] = useState("尚未部署");
   const [busy, setBusy] = useState(false);
@@ -91,8 +128,10 @@ export default function Home() {
   useEffect(() => { void refreshRpc(); }, [refreshRpc]);
   // An injected provider never becomes the default signing choice.
   const selected = useMemo(() => wallets.find(x => x.id === choiceId) || null, [wallets, choiceId]);
-  useEffect(() => { setPrepared(null); setSigned(null); setAnchorQuote(null); },
-    [address, chainId, preview, serviceId, serviceSigner]);
+  useEffect(() => {
+    setPrepared(null); setSigned(null); setAnchorQuote(null);
+    pendingSignature.current = null; setPendingSignatureAvailable(false);
+  }, [address, chainId, preview, serviceId, serviceSigner]);
   useEffect(() => {
     try {
       const raw = localStorage.getItem(intentKey);
@@ -250,35 +289,41 @@ export default function Home() {
       const signature = await wallet.signTypedData({
         domain: taskDomain, types: taskTypes, primaryType: "TaskCommitment", message
       });
+      pendingSignature.current = signature;
+      setPendingSignatureAvailable(true);
       if (activeProvider.current !== provider) throw new Error("钱包连接已变化，已丢弃过期签名结果");
       requireBotContext(preview.task, message.requester, (await walletAccounts(provider))[0],
         await walletChainId(provider), await publicClient.getChainId());
-      if (!(await verifySignature(message, signature))) throw new Error("钱包签名无法恢复到请求者地址");
-      const digest = await taskDigest(message, signature);
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 8_000);
-      let pythonCheck: { requester: string; taskDigest: string; specHash: string;
-        serviceIdHash: string; serviceSigner: string; typedDataDigest: string; scope: string };
-      try {
-        const response = await fetch("/api/verify-signed-demo", { method: "POST",
-          headers: { "content-type": "application/json" }, body: JSON.stringify({ signature }),
-          signal: controller.signal, cache: "no-store" });
-        if (!response.ok) throw new Error("本地 Python 模型未通过签名交叉核验");
-        pythonCheck = await response.json();
-      } finally { clearTimeout(timer); }
-      if (pythonCheck.scope !== "LOCAL_PYTHON_SIGNATURE_CHECK_ONLY" ||
-          pythonCheck.requester.toLowerCase() !== message.requester.toLowerCase() ||
-          pythonCheck.taskDigest !== digest || pythonCheck.specHash !== preview.hash ||
-          pythonCheck.serviceIdHash !== prepared.serviceIdHash ||
-          pythonCheck.serviceSigner.toLowerCase() !== prepared.serviceSigner.toLowerCase() ||
-          pythonCheck.typedDataDigest !== confirmedDemo.typedDataDigest)
-        throw new Error("Python 与 TypeScript 任务摘要或身份不一致");
+      const digest = await verifySignatureWithPython(signature, message, preview.hash,
+        prepared.serviceIdHash, prepared.serviceSigner);
       if (!anchorAddress) throw new Error("未配置经过核验的主网合约地址");
       const existing = await publicClient.readContract({ address: anchorAddress, abi: anchorAbi,
         functionName: "tasks", args: [message.requester, digest] });
       if (existing[0] !== zeroAddress) throw new Error("该请求者的任务摘要已经登记，停止重复提交");
       setSigned({ ...prepared, signature, digest });
+      pendingSignature.current = null;
+      setPendingSignatureAvailable(false);
       setNotice("EIP-712 签名已由 TypeScript 和本机原 Python 模型交叉验证；尚未发送链上交易。");
+    } catch (error) { setNotice(friendlyWalletError(error)); }
+    finally { setBusy(false); }
+  }
+  async function retryPythonVerification() {
+    const signature = pendingSignature.current;
+    if (!signature || !provider || !address || !preview || !prepared) return;
+    setBusy(true); setNotice("");
+    try {
+      requireBotContext(preview.task, prepared.message.requester, (await walletAccounts(provider))[0],
+        await walletChainId(provider), await publicClient.getChainId());
+      const digest = await verifySignatureWithPython(signature, prepared.message, preview.hash,
+        prepared.serviceIdHash, prepared.serviceSigner);
+      if (!anchorAddress) throw new Error("未配置经过核验的主网合约地址");
+      const existing = await publicClient.readContract({ address: anchorAddress, abi: anchorAbi,
+        functionName: "tasks", args: [prepared.message.requester, digest] });
+      if (existing[0] !== zeroAddress) throw new Error("该请求者的任务摘要已经登记，停止重复提交");
+      setSigned({ ...prepared, signature, digest });
+      pendingSignature.current = null;
+      setPendingSignatureAvailable(false);
+      setNotice("原内存签名已通过 TypeScript 与原 Python 模型交叉验证；尚未发送链上交易。");
     } catch (error) { setNotice(friendlyWalletError(error)); }
     finally { setBusy(false); }
   }
@@ -471,7 +516,10 @@ export default function Home() {
         <button className="secondary" onClick={prepareTask} disabled={!readyToSign || busy}>准备任务承诺</button>
         {prepared && <div className="preview"><h3>待签消息已与审阅文件核对</h3><pre>{JSON.stringify(reviewedTypedData, null, 2)}</pre>
           <p className="hint">服务签名者 {prepared.serviceSigner} 不属于上游任务签名字段；本地应用规则将它与内部 Demo 服务绑定，原合约不验证此授权。</p>
-          <button onClick={signTask} disabled={busy || !taskSignaturesEnabled}>签署 EIP-712 任务承诺</button>
+          <button onClick={signTask} disabled={busy || !taskSignaturesEnabled || pendingSignatureAvailable}>签署 EIP-712 任务承诺</button>
+          {pendingSignatureAvailable && <button className="secondary" onClick={retryPythonVerification} disabled={busy}>
+            重试本地 Python 交叉校验（不请求新签名）</button>}
+          {pendingSignatureAvailable && <p className="hint">此标签页内存暂存签名，仅用于本地交叉校验；不会写入存储或日志。请勿刷新或关闭页面。</p>}
           {!taskSignaturesEnabled && <p className="hint">任务签名安全锁已启用；尚未请求 MetaMask 签名。</p>}</div>}
         {signed && <dl className="facts signed"><div><dt>签名者 / 请求者</dt><dd>{signed.message.requester}</dd></div>
           <div><dt>登记的服务签名者</dt><dd>{signed.serviceSigner}</dd></div>

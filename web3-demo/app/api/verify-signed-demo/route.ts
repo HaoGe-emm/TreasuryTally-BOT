@@ -1,7 +1,15 @@
 import { spawn } from "node:child_process";
+import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 
 export const runtime = "nodejs";
+
+async function localSignatureApprovalEnabled(): Promise<boolean> {
+  try {
+    const localEnv = await readFile(resolve(process.cwd(), ".env.local"), "utf8");
+    return /^\s*NEXT_PUBLIC_ENABLE_TASK_SIGNATURES\s*=\s*true\s*$/m.test(localEnv);
+  } catch { return false; }
+}
 
 type CheckResult = { requester: string; taskDigest: string; specHash: string;
   serviceIdHash: string; serviceSigner: string; typedDataDigest: string; scope: string };
@@ -45,22 +53,42 @@ function checkWithPython(signature: string, executable: string): Promise<CheckRe
 export async function POST(request: Request) {
   const responseHeaders = { "Cache-Control": "no-store" };
   const origin = request.headers.get("origin");
-  if (process.env.NODE_ENV !== "development" ||
-      process.env.NEXT_PUBLIC_ENABLE_TASK_SIGNATURES !== "true" ||
-      !origin || origin !== new URL(request.url).origin)
-    return Response.json({ error: "本地任务签名校验未开放" }, { status: 403, headers: responseHeaders });
+  if (process.env.NODE_ENV !== "development")
+    return Response.json({ code: "not_development", error: "签名校验接口只在本地开发模式开放。" },
+      { status: 403, headers: responseHeaders });
+  if (!(await localSignatureApprovalEnabled()))
+    return Response.json({ code: "signature_check_disabled",
+      error: "本地任务签名校验未开放；.env.local 开关未启用。" },
+      { status: 403, headers: responseHeaders });
+  const requestUrl = new URL(request.url);
+  const host = request.headers.get("host") || "";
+  const loopbackHost = /^(127\.0\.0\.1|localhost)(:\d+)?$/i.test(host);
+  const hostOrigin = `${requestUrl.protocol}//${host}`;
+  if (!loopbackHost || !origin || (origin !== requestUrl.origin && origin !== hostOrigin))
+    return Response.json({ code: "origin_mismatch", error: "请求来源与本地页面不一致。" },
+      { status: 403, headers: responseHeaders });
   const executable = process.env.BOT_DEMO_PYTHON;
   if (!executable) return Response.json({ error: "本地 Python 校验器未配置" }, { status: 503, headers: responseHeaders });
+  let parsed: Record<string, unknown>;
   try {
     const raw = await request.text();
-    if (raw.length > 1024) throw new Error("请求过长");
-    const parsed = JSON.parse(raw) as Record<string, unknown>;
-    if (Object.keys(parsed).length !== 1 || typeof parsed.signature !== "string" ||
-        !/^0x[0-9a-fA-F]{130}$/.test(parsed.signature)) throw new Error("签名格式无效");
+    if (raw.length > 1024) throw new Error("too_large");
+    parsed = JSON.parse(raw) as Record<string, unknown>;
+  } catch {
+    return Response.json({ code: "invalid_request", error: "签名校验请求格式无效。" },
+      { status: 400, headers: responseHeaders });
+  }
+  if (Object.keys(parsed).length !== 1 || typeof parsed.signature !== "string" ||
+      !/^0x[0-9a-fA-F]{130}$/.test(parsed.signature))
+    return Response.json({ code: "invalid_signature_format", error: "钱包返回的签名格式不符合 65 字节 EVM 签名。" },
+      { status: 400, headers: responseHeaders });
+  try {
     const result = await checkWithPython(parsed.signature, executable);
     return Response.json(result, { headers: responseHeaders });
   } catch {
-    // The signature and process output are never logged or returned.
-    return Response.json({ error: "签名未通过原 Python 模型校验" }, { status: 422, headers: responseHeaders });
+    // Never log or return the signature, process input, stderr, or stack.
+    return Response.json({ code: "python_validation_failed",
+      error: "Python 模型已执行，但未验证该签名；原始签名未记录。" },
+      { status: 422, headers: responseHeaders });
   }
 }
