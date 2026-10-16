@@ -2,7 +2,7 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const { generatePrivateKey, privateKeyToAccount } = require("viem/accounts");
 const { parseTaskSpec, verifySpec, stableHash, utcTimestamp, requireBotContext,
-  taskDigest, verifySignature, taskDomain, taskTypes } = require("../.tmp/test-lib/task.js");
+  taskDigest, typedDataDigest, verifySignature, taskDomain, taskTypes } = require("../.tmp/test-lib/task.js");
 const { collectWallets, switchToBot, walletChainId, friendlyWalletError } = require("../.tmp/test-lib/wallet.js");
 const { anchorAbi } = require("../.tmp/test-lib/anchor.js");
 const { confirmedDemo, requireConfirmedDemoBinding } = require("../.tmp/test-lib/demo.js");
@@ -40,9 +40,22 @@ for (const item of anchorAbi) {
   assert.equal(demoProvenance.service_signer, confirmedDemo.serviceSigner);
   assert.equal(demoProvenance.service_id, confirmedDemo.serviceId);
   requireConfirmedDemoBinding(confirmedTask, confirmedDemo.requester, confirmedDemo.serviceId, confirmedDemo.serviceSigner);
+  const signingPreview = JSON.parse(fs.readFileSync("public/bot677-demo/task-commitment-preview.json", "utf8"));
+  assert.equal(signingPreview.status, "UNSIGNED_PREVIEW");
+  assert.equal(signingPreview.task_spec_hash, confirmedDemo.specHash);
+  assert.equal(signingPreview.service_signer, confirmedDemo.serviceSigner);
+  assert.equal(signingPreview.service_id_hash, "0x540bafe01cfa9731e46b8116f8dc63fa62e3a2853b0cb28beeabdaaa0ddbd7cd");
+  assert.deepEqual(signingPreview.domain, taskDomain);
+  assert.deepEqual(signingPreview.types.TaskCommitment, taskTypes.TaskCommitment);
+  assert.equal(signingPreview.primaryType, "TaskCommitment");
+  assert.equal(typedDataDigest(signingPreview.message), confirmedDemo.typedDataDigest);
+  assert.equal(signingPreview.typed_data_digest, confirmedDemo.typedDataDigest);
+  assert.ok(!("signature" in signingPreview) && !("taskDigest" in signingPreview));
   assert.throws(() => requireConfirmedDemoBinding(confirmedTask, confirmedDemo.serviceSigner, confirmedDemo.serviceId, confirmedDemo.serviceSigner));
   assert.throws(() => requireConfirmedDemoBinding(confirmedTask, confirmedDemo.requester, "wrong-service", confirmedDemo.serviceSigner));
   assert.throws(() => requireConfirmedDemoBinding(confirmedTask, confirmedDemo.requester, confirmedDemo.serviceId, confirmedDemo.requester));
+  assert.throws(() => requireConfirmedDemoBinding({ ...confirmedTask, spec_hash: "0x" + "00".repeat(32) },
+    confirmedDemo.requester, confirmedDemo.serviceId, confirmedDemo.serviceSigner));
   const requester = privateKeyToAccount(generatePrivateKey());
   const other = privateKeyToAccount(generatePrivateKey());
   const botTask = { ...sample, chain_id: 677 };

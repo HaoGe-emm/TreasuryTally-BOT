@@ -1,0 +1,77 @@
+{
+  "status": "UNSIGNED_PREVIEW",
+  "demo_data": true,
+  "task_spec_path": "task-spec.json",
+  "task_spec_hash": "0x9e0073e83868993f4da3bc013fe8aca7e90af7a99fb80bcda8d593963528d093",
+  "service_id_hash": "0x540bafe01cfa9731e46b8116f8dc63fa62e3a2853b0cb28beeabdaaa0ddbd7cd",
+  "service_signer": "0xb6bF6a936F529650992B71e2DeB79E80Fd3da71B",
+  "typed_data_digest": "0x193954b4c310b54ac5b93bf9cb546d31f831f40b76378a100c53010d93fb7f2a",
+  "domain": {
+    "name": "TrustReceipt",
+    "version": "1",
+    "chainId": 677
+  },
+  "types": {
+    "EIP712Domain": [
+      {
+        "name": "name",
+        "type": "string"
+      },
+      {
+        "name": "version",
+        "type": "string"
+      },
+      {
+        "name": "chainId",
+        "type": "uint256"
+      }
+    ],
+    "TaskCommitment": [
+      {
+        "name": "commitmentId",
+        "type": "string"
+      },
+      {
+        "name": "taskId",
+        "type": "string"
+      },
+      {
+        "name": "specHash",
+        "type": "bytes32"
+      },
+      {
+        "name": "requester",
+        "type": "address"
+      },
+      {
+        "name": "serviceId",
+        "type": "string"
+      },
+      {
+        "name": "createdAt",
+        "type": "string"
+      },
+      {
+        "name": "expiresAt",
+        "type": "string"
+      }
+    ]
+  },
+  "primaryType": "TaskCommitment",
+  "message": {
+    "commitmentId": "task-commitment-bot677-demo-20261016-01",
+    "taskId": "bot677-demo-usdt-26879920-two-accounts",
+    "specHash": "0x9e0073e83868993f4da3bc013fe8aca7e90af7a99fb80bcda8d593963528d093",
+    "requester": "0x89F415bb42e356E8b892C10B05522e0a8Ef151F3",
+    "serviceId": "treasurytally-bot-internal-demo-20261016",
+    "createdAt": "2026-10-16T14:08:42+00:00",
+    "expiresAt": ""
+  },
+  "limitations": [
+    "No signature or taskDigest exists yet.",
+    "EIP-712 domain has no verifyingContract.",
+    "The original TaskCommitment signature does not bind serviceSigner.",
+    "An on-chain anchor would prove a commitment record, not a transfer or financial verification.",
+    "The service_id is an internal Demo label, not a registered ERC-8004 identity."
+  ]
+}

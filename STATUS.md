@@ -1314,3 +1314,11 @@ M10 已在独立交付分支接入 M8+M9 工作区与页面并完成本地验收
 - 从指定地址 `0x89F415bb42e356E8b892C10B05522e0a8Ef151F3` 的 nonce 4 部署：交易 `0x93f4f6ce8f4cffa249db4af14687af3ed1b64f1d82db8befd30efc444579ec2a`，合约 `0xAf845BA2D1aF0e842FD2185fa081720D6D3D7148`，区块 26899309，receipt status `0x1`。
 - 独立 BOT RPC 只读核验交易 `to=null`、创建代码 SHA-256 `0x189ea148974f79cee0447b7e763295f2727e50f4d29b16540e4de2ab57c9a85a`，链上 1297 字节运行时代码 SHA-256 `0xe19c6b11680cbd60c5fb6061d52052c65596e48b9c10cbc59415538e03a75eaf`，并核对区块 Hash。实际使用 333492 gas、有效 gasPrice 20 gwei、费用 0.00666984 BOT。
 - 已将合约地址及运行时代码哈希写入 Git 忽略的本地 `.env.local`；部署、任务签名和主网业务写入开关均恢复为 false。公开证据见 `docs/bot/mainnet-deployment.json`。部署仅证明演示合约存在，不证明任何 TaskSpec、资金转账或财务核验结果。
+
+## BOT Chain 阶段 3D 签名前准备（2026-10-16）
+
+- 本轮授权仅限本地开发与主网只读核验。独立 RPC 再次读到 Chain ID 677、3C 成功部署回执、原创建代码及 1297 字节运行时代码 SHA-256 `0xe19c6b11680cbd60c5fb6061d52052c65596e48b9c10cbc59415538e03a75eaf`。指定请求者钱包在本轮尚未由真实扩展再次确认，签名前必须现场核对地址与网络。
+- 采用用户确认的 `web3-demo/public/bot677-demo/task-spec.json`，新增固定、未签署的 `task-commitment-preview.json`。原 Python TaskSpec/TaskCommitment/EIP-712 与 viem 对 `spec_hash`、服务 ID 哈希及 EIP-712 消息摘要交叉一致；消息摘要为 `0x193954b4c310b54ac5b93bf9cb546d31f831f40b76378a100c53010d93fb7f2a`，不是需要真实签名才产生的 `taskDigest`。
+- 页面展示 domain/types/primaryType/message 全字段，并明确 EIP-712 domain 缺少 verifyingContract、签名字段未直接绑定 serviceSigner、合约自身不验签或验证资金。签名及写入本地开关继续为 false。未来获签名批准后才允许用户主动点击签名；原签名不入仓库，Python 与 TypeScript 必须双重核验，且只读检查重复登记。
+- 已编写后续 `anchorTask` 只读模拟、费用/nonce/余额预览和交易回执、TaskAnchored 事件、tasks 存储交叉核验；浏览器仅保存公开 digest/hash 以便刷新后查询。由于尚无真实签名及本轮写入批准，主网业务交易测试、刷新后真实业务读回均未发生。
+- 待单独批准：第一次仅 EIP-712 钱包签名；完成签名核验和具体交易预览后，第二次单独批准 `anchorTask` 主网发送。不得把部署回执、只读预览或 EIP-712 消息摘要当作任务登记成功。
