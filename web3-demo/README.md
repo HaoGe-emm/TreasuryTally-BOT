@@ -1,6 +1,6 @@
 # TreasuryTally BOT Chain Web3 Demo
 
-Local Next.js preview for the BOT Chain Edition. The mainnet contract is not deployed. Task signatures, contract deployment and mainnet business writes are disabled in `.env.example` until separate user approvals.
+Local Next.js preview for the BOT Chain Edition. The approved demo CommitmentAnchor was deployed to BOT Chain 677 at `0xAf845BA2D1aF0e842FD2185fa081720D6D3D7148` (transaction `0x93f4f6ce8f4cffa249db4af14687af3ed1b64f1d82db8befd30efc444579ec2a`). See `../docs/bot/mainnet-deployment.json` for read-only RPC verification. Task signatures, further deployment, and mainnet business writes remain disabled in `.env.example` and local development config.
 
 ```powershell
 cd D:\TreasuryTally-BOT\web3-demo

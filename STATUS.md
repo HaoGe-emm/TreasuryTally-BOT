@@ -1307,3 +1307,10 @@ M10 已在独立交付分支接入 M8+M9 工作区与页面并完成本地验收
 - 用户在实际浏览器运行只读预检：钱包地址余额 0.49024356 BOT，latest/pending nonce 均为 4，账户 codeBytes=0；固定区块 Hash 符合来源记录，精确 USDT Transfer eth_getLogs 返回 0 条。这是用户回报的 RPC 观察，不是财务核验或主网交易证据。
 - 新增 `/deploy` 钱包部署预览界面，按已审阅产物核对编译参数及创建/运行时代码哈希，针对连接钱包只读估算 Gas、余额、nonce 和预计地址；部署发送入口默认关闭。主网合约仍未部署，主网部署/业务交易均为 0。
 - 本阶段仍须分别取得主网部署及 anchorTask 的明确批准。合同业务限制、真实钱包未覆盖场景与详细证据见本聊天阶段 3 交付报告。
+
+## BOT Chain 阶段 3C 合约部署（2026-10-16）
+
+- 用户单独批准一笔 BOT Chain Mainnet 677 的原版 `CommitmentAnchor.sol` 合约创建交易，并本人在 MetaMask 确认；没有授权或执行 `anchorTask`、`anchorDelivery`、其他主网写入、GitHub push 或 Vercel 发布。
+- 从指定地址 `0x89F415bb42e356E8b892C10B05522e0a8Ef151F3` 的 nonce 4 部署：交易 `0x93f4f6ce8f4cffa249db4af14687af3ed1b64f1d82db8befd30efc444579ec2a`，合约 `0xAf845BA2D1aF0e842FD2185fa081720D6D3D7148`，区块 26899309，receipt status `0x1`。
+- 独立 BOT RPC 只读核验交易 `to=null`、创建代码 SHA-256 `0x189ea148974f79cee0447b7e763295f2727e50f4d29b16540e4de2ab57c9a85a`，链上 1297 字节运行时代码 SHA-256 `0xe19c6b11680cbd60c5fb6061d52052c65596e48b9c10cbc59415538e03a75eaf`，并核对区块 Hash。实际使用 333492 gas、有效 gasPrice 20 gwei、费用 0.00666984 BOT。
+- 已将合约地址及运行时代码哈希写入 Git 忽略的本地 `.env.local`；部署、任务签名和主网业务写入开关均恢复为 false。公开证据见 `docs/bot/mainnet-deployment.json`。部署仅证明演示合约存在，不证明任何 TaskSpec、资金转账或财务核验结果。
