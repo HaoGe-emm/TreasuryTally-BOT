@@ -23,6 +23,8 @@ type Prepared = Omit<Signed, "signature" | "digest">;
 type AnchorQuote = { digest: Hex; gas: bigint; gasLimit: bigint; gasPrice: bigint;
   maxFee: bigint; balance: bigint; nonce: number; createdAt: number };
 type AnchorRecord = { digest: Hex; hash: Hex; block: string; fee: string };
+type WriteStatus = { state: "checking" | "enabled" | "disabled" | "error";
+  checkedAt?: string; detail?: string };
 const intentKey = "treasurytally-bot677-demo-anchor-intent-v1";
 const signatureAttemptKey = `treasurytally:task-sign-requested:${confirmedDemo.typedDataDigest}`;
 const zeroAddress = "0x0000000000000000000000000000000000000000";
@@ -125,6 +127,7 @@ export default function Home() {
   const [pendingSignatureAvailable, setPendingSignatureAvailable] = useState(false);
   const [taskSignaturesEnabled, setTaskSignaturesEnabled] = useState(false);
   const [mainnetWritesEnabled, setMainnetWritesEnabled] = useState(false);
+  const [writeStatus, setWriteStatus] = useState<WriteStatus>({ state: "checking" });
   const [signRequestAttempted, setSignRequestAttempted] = useState(false);
   const [prepared, setPrepared] = useState<Prepared | null>(null);
   const [contractStatus, setContractStatus] = useState("尚未部署");
@@ -132,17 +135,43 @@ export default function Home() {
   const [notice, setNotice] = useState("");
   const [tx, setTx] = useState<Hex | null>(null);
   const [anchorQuote, setAnchorQuote] = useState<AnchorQuote | null>(null);
+  const [anchorQuoteStatus, setAnchorQuoteStatus] = useState("尚未运行只读预览");
   const [anchorRecord, setAnchorRecord] = useState<AnchorRecord | null>(null);
   const [anchorIntent, setAnchorIntent] = useState<{ digest: Hex; hash?: Hex } | null>(null);
   const activeDigest = signed?.digest ?? historicalDigest;
 
   useEffect(() => collectWallets(setWallets), []);
-  const refreshWriteApproval = useCallback(async () => {
+  const refreshWriteApproval = useCallback(async (announce = false) => {
+    setMainnetWritesEnabled(false);
+    setWriteStatus({ state: "checking" });
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 8_000);
     try {
-      const response = await fetch("/api/mainnet-write-status", { cache: "no-store" });
-      const status = await response.json();
-      setMainnetWritesEnabled(response.ok && status.enabled === true);
-    } catch { setMainnetWritesEnabled(false); }
+      const response = await fetch("/api/mainnet-write-status", {
+        cache: "no-store", signal: controller.signal
+      });
+      const status = await response.json() as { enabled?: boolean; status?: string;
+        scope?: string; reason?: string };
+      if (!response.ok || status.status === "unavailable")
+        throw new Error(status.reason || `本地授权接口 HTTP ${response.status}`);
+      if (status.scope !== "LOCAL_DEVELOPMENT_ONLY" ||
+          !((status.status === "disabled" && status.enabled === false) ||
+            (status.status === "enabled" && status.enabled === true)))
+        throw new Error("本地授权接口返回了无效状态");
+      const enabled = status.status === "enabled";
+      setMainnetWritesEnabled(enabled);
+      setWriteStatus({ state: enabled ? "enabled" : "disabled",
+        checkedAt: new Date().toLocaleTimeString("zh-CN", { hour12: false }) });
+      if (announce) setNotice(enabled
+        ? "本地主网写入授权：开发环境已开启；仍需单独交易批准和本人钱包确认。"
+        : "本地主网写入授权：关闭。这是预期的安全状态；anchorTask 只读预览仍可使用。");
+    } catch (error) {
+      setMainnetWritesEnabled(false);
+      const detail = friendlyWalletError(error);
+      setWriteStatus({ state: "error", detail,
+        checkedAt: new Date().toLocaleTimeString("zh-CN", { hour12: false }) });
+      if (announce) setNotice("本地写入授权状态检查失败：" + detail + "。写入保持关闭；只读预览仍可使用。");
+    } finally { clearTimeout(timer); }
   }, []);
   useEffect(() => { void refreshWriteApproval(); }, [refreshWriteApproval]);
   useEffect(() => {
@@ -170,6 +199,7 @@ export default function Home() {
   const selected = useMemo(() => wallets.find(x => x.id === choiceId) || null, [wallets, choiceId]);
   useEffect(() => {
     setPrepared(null); setSigned(null); setHistoricalDigest(null); setHistoricalAcknowledged(false); setAnchorQuote(null);
+    setAnchorQuoteStatus("尚未运行只读预览");
     pendingSignature.current = null; setPendingSignatureAvailable(false);
   }, [address, chainId, preview, serviceId, serviceSigner]);
   useEffect(() => {
@@ -311,7 +341,7 @@ export default function Home() {
   }
   async function restoreHistoricalDigest() {
     if (!provider || !address || !preview) return;
-    setBusy(true); setNotice(""); setAnchorQuote(null);
+    setBusy(true); setNotice(""); setAnchorQuote(null); setAnchorQuoteStatus("尚未运行只读预览");
     try {
       requireReviewedSigningPreview();
       const [accounts, walletNetwork] = await Promise.all([
@@ -396,9 +426,9 @@ export default function Home() {
   async function prepareAnchorQuote() {
     if (!provider || !address || !activeDigest || !preview || !anchorAddress || !anchorRuntimeHash) return;
     setBusy(true); setNotice(""); setAnchorQuote(null);
+    setAnchorQuoteStatus("正在核对 BOT RPC、合约和任务，并执行只读模拟…");
     let check = "BOT RPC Chain ID 与合约字节码";
     try {
-      if (anchorIntent) throw new Error("已有本机提交记录；请先读回回执，禁止重复发送");
       await requireLiveBotContract();
       setRpcChainId(677);
       setRpcError("");
@@ -442,8 +472,13 @@ export default function Home() {
       if (balance < maxFee) throw new Error("BOT 余额不足以覆盖预计最高 Gas 费用");
       setAnchorQuote({ digest: activeDigest, gas, gasLimit, gasPrice, maxFee,
         balance, nonce: pending, createdAt: Date.now() });
+      setAnchorQuoteStatus("只读模拟成功；下方为本次 Gas 和最高费用预览。未发送交易。");
       setNotice("只读模拟和 Gas 估算通过；这不是签名或主网交易批准。");
-    } catch (error) { setNotice(`只读预览失败（${check}）：${friendlyWalletError(error)}`); }
+    } catch (error) {
+      const failure = `只读预览失败（${check}）：${friendlyWalletError(error)}`;
+      setAnchorQuoteStatus(failure);
+      setNotice(failure);
+    }
     finally { setBusy(false); }
   }
   async function readAnchorReceipt(hash: Hex, digest: Hex) {
@@ -505,7 +540,8 @@ export default function Home() {
     try {
       const gate = await fetch("/api/mainnet-write-status", { cache: "no-store" });
       const approval = await gate.json();
-      if (!gate.ok || approval.enabled !== true)
+      if (!gate.ok || approval.enabled !== true || approval.status !== "enabled" ||
+          approval.scope !== "LOCAL_DEVELOPMENT_ONLY")
         throw new Error("本地主网写入开关未开放，停止发送");
       if (Date.now() - anchorQuote.createdAt > 60_000 || anchorQuote.digest !== activeDigest)
         throw new Error("交易预览已过期，请重新运行只读模拟");
@@ -629,7 +665,7 @@ export default function Home() {
             placeholder="0x…" autoComplete="off"/></label></div>
         <button className="secondary" onClick={prepareTask} disabled={!readyToSign || busy}>准备任务承诺</button>
         <div className="warning">既往记录：2026-10-16 页面曾显示该固定 TaskCommitment 通过 TypeScript 与原 Python 模型校验，并产生摘要 {historicalObservation.task_digest}。原始签名未保存；当前页面无法独立重验该签名。</div>
-        <button className="secondary" onClick={restoreHistoricalDigest} disabled={!readyForFixedDemo || busy || !!anchorIntent}>
+        <button className="secondary" onClick={restoreHistoricalDigest} disabled={!readyForFixedDemo || busy}>
           载入先前已核验的公开摘要（本地记录）</button>
         {prepared && <div className="preview"><h3>待签消息已与审阅文件核对</h3><pre>{JSON.stringify(reviewedTypedData, null, 2)}</pre>
           <p className="hint">服务签名者 {prepared.serviceSigner} 不属于上游任务签名字段；本地应用规则将它与内部 Demo 服务绑定，原合约不验证此授权。</p>
@@ -671,8 +707,10 @@ export default function Home() {
         <div><dt>主网地址</dt><dd>{anchorAddress || "尚未部署"}</dd></div>
         <div><dt>字节码核对</dt><dd>{contractStatus} <button className="secondary" onClick={() => void refreshContract()}>重试只读核验</button></dd></div>
         <div><dt>交易</dt><dd>{tx ? <a href={`https://scan.botchain.ai/tx/${tx}`} target="_blank" rel="noreferrer">{tx} ↗</a> : "未提交"}</dd></div></dl>
-      {activeDigest && !anchorIntent && <button className="secondary" onClick={prepareAnchorQuote}
-        disabled={busy || !readyToQuote}>运行只读 anchorTask 模拟与费用预览</button>}
+      <button className="secondary" onClick={prepareAnchorQuote}
+        disabled={busy || !readyToQuote}>运行只读 anchorTask 模拟与费用预览</button>
+      <p className="hint" role="status">{anchorQuoteStatus}</p>
+      {!activeDigest && <p className="hint">请先在上方载入已确认的历史摘要；此按钮只做链上读取和模拟。</p>}
       {anchorQuote && activeDigest && <div className="preview"><h3>anchorTask 交易预览 · 未批准发送</h3>
         <dl className="facts"><div><dt>From</dt><dd>{confirmedDemo.requester}</dd></div>
           <div><dt>To</dt><dd>{anchorAddress}</dd></div>
@@ -701,8 +739,15 @@ export default function Home() {
         <div><dt>BOTScan</dt><dd><a href={`https://scan.botchain.ai/tx/${anchorRecord.hash}`}
           target="_blank" rel="noreferrer">{anchorRecord.hash} ↗</a></dd></div></dl>}
       <button disabled={!readyToAnchor || busy} onClick={anchorTask}>在 BOT Chain 登记 anchorTask</button>
-      <button className="secondary" onClick={() => void refreshWriteApproval()} disabled={busy}>检查本地写入授权状态</button>
-      <p className="hint">本地主网写入授权：{mainnetWritesEnabled ? "开发环境已开启，仍需主动点击并亲自确认 MetaMask" : "关闭"}</p>
+      <button className="secondary" onClick={() => void refreshWriteApproval(true)}
+        disabled={busy || writeStatus.state === "checking"}>检查本地写入授权状态</button>
+      <p className="hint" role="status">本地主网写入授权：{writeStatus.state === "checking"
+        ? "检查中…" : writeStatus.state === "disabled"
+        ? "关闭（正常安全状态；只读预览可用）" : writeStatus.state === "enabled"
+        ? "开发环境已开启，仍需单独批准并亲自确认 MetaMask"
+        : "检查失败（写入保持关闭；只读预览可用）"}
+        {writeStatus.checkedAt ? ` · 检查于 ${writeStatus.checkedAt}` : ""}
+        {writeStatus.detail ? ` · ${writeStatus.detail}` : ""}</p>
       {!mainnetWritesEnabled && <p className="hint">业务写入安全锁已启用：已部署合约的 anchorTask 仍需单独批准，当前不会发送交易。</p>}
     </section>
     {notice && <div className="notice" role="status">{notice}</div>}

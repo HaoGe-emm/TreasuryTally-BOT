@@ -8,7 +8,8 @@
     "start": "next start --hostname 127.0.0.1",
     "typecheck": "tsc --noEmit",
     "test:anchor-local": "npm --prefix ../local-evm test",
-    "test:unit": "tsc -p tsconfig.test.json && node scripts/check_units.cjs"
+    "test:unit": "tsc -p tsconfig.test.json && node scripts/check_units.cjs",
+    "test:write-status": "node --experimental-strip-types scripts/check_write_status.mjs"
   },
   "dependencies": {
     "next": "16.4.2",
