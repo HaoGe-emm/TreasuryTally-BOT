@@ -2,6 +2,16 @@ import { decodeEventLog, decodeFunctionData, hexToBytes, type Address, type Hex 
 import { anchorAbi, anchorAddress, anchorRuntimeHash, publicClient } from "./anchor";
 import { sha256 } from "./task";
 
+// Read from the BOT 677 transaction, receipt, TaskAnchored event and tasks storage.
+export const latestAnchor = {
+  requester: "0x89F415bb42e356E8b892C10B05522e0a8Ef151F3",
+  taskDigest: "0x252f05e1d01cf65a216a182511018a9285102481e1596c454f50ddcfd65a2ac7",
+  specHash: "0x65ddf4bd97ec7d60a111b55a3ac208937557f4a63bc8d61cd91438d467fba107",
+  serviceIdHash: "0x7efdfa4d238a21c5f82332992e6fadf67ba6e1da5d0f53b21b20fd64c66ac360",
+  serviceSigner: "0x89F415bb42e356E8b892C10B05522e0a8Ef151F3",
+  transactionHash: "0xc61c7ee5af8dbceff08d0d321b56d8f94674c987c9c2e60e0edf130837e1ac49"
+} as const;
+
 export const historicalAnchor = {
   requester: "0x89F415bb42e356E8b892C10B05522e0a8Ef151F3",
   taskDigest: "0xc3702a7758dc0eb150ed0a51c13c8c30dd7b6b850f41c0abdcb446778361b25d",

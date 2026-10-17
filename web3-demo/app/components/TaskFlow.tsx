@@ -150,7 +150,7 @@ export default function TaskFlow() {
         primaryType: "TaskCommitment", message: draft.message });
       const verified = await verifyVisitorCommitment(draft.task, draft.message, signature, requester);
       setSigned({ ...draft, signature, digest: verified.digest, serviceIdHash: verified.serviceIdHash });
-      setNotice("EIP-712 签名已在浏览器恢复为当前 requester，按原算法生成 taskDigest。尚未上链。原始签名仅保留在此标签页内存中。");
+      setNotice("签名已验证，任务摘要已生成。尚未上链；请先查看模拟和费用。");
     } catch (error) { setNotice("签名未完成或校验失败：" + friendlyWalletError(error)); }
     finally { setBusy(false); }
   }
@@ -273,7 +273,7 @@ export default function TaskFlow() {
     if (!activeIntent?.transactionHash) return;
     setBusy(true); setNotice("");
     try { setEvidence(await verifyTaskAnchorEvidence(activeIntent as ExpectedTaskAnchor));
-      setNotice("BOT 677 回执、事件与存储已重新核验。此读回不重验已丢失的原始签名。"); }
+      setNotice("BOT 677 回执、事件与存储已重新核验。"); }
     catch (error) { setEvidence(null); setNotice("链上读回尚未成功：" + friendlyWalletError(error)); }
     finally { setBusy(false); }
   }
@@ -284,7 +284,7 @@ export default function TaskFlow() {
       <WalletPanel wallet={wallet} /><p className="hint">{rpcStatus}</p>
       <button className="secondary" onClick={() => void refreshRpc()}>重查 BOT RPC</button></section>
     <section className="panel task-step"><div className="panel-head"><span className="step">02</span><h2>创建任务</h2></div>
-      <p className="muted">你的钱包将成为 TaskSpec 财库和 requester；填写 Token、不同的收款方与已产生的单个区块。这里只指定核查范围，不声称该区块有转账。排除规则为空，最多 200 条。</p>
+      <p className="muted">填写 Token、收款方和已产生的 BOT Chain 区块。当前钱包是任务请求者与财库地址；此处创建的是核查范围。</p>
       <div className="inputs"><label>ERC-20 Token 地址<input value={token}
         onChange={event => { setToken(event.target.value); invalidateDraft(); }} placeholder="0x…"/></label>
         <label>收款方地址<input value={recipient}
@@ -304,7 +304,7 @@ export default function TaskFlow() {
         <pre>{JSON.stringify({ domain: taskDomain, types: taskTypes,
           primaryType: "TaskCommitment", message: draft.message }, null, 2)}</pre>
         <p className="hint">EIP-712 消息摘要：{typedDataDigest(draft.message)}</p>
-        <p className="warning">签名前请知悉：此 EIP-712 domain 不含 verifyingContract，消息不签入 serviceSigner，expiresAt 为空；已部署合约不验证此签名。签名和登记只表示任务承诺，不证明资金流或财务核验通过。</p>
+        <p className="hint">本次签名用于演示任务确认，当前合约不验证此消息签名。请确认任务内容后继续。<a href="https://github.com/HaoGe-emm/TreasuryTally-BOT/blob/main/web3-demo/README.md" target="_blank" rel="noreferrer">技术详情 ↗</a></p>
         <button onClick={sign} disabled={busy || !!signed}>Sign Task · 请求钱包签名</button>
       </div>}
     </section>
@@ -334,7 +334,7 @@ export default function TaskFlow() {
           <div><dt>nonce</dt><dd>{quote.nonce}</dd></div></dl>
         <label className="acknowledge"><input type="checkbox" checked={acknowledged}
           onChange={event => setAcknowledged(event.target.checked)}/>
-          我确认这是自己的演示核查任务；登记会消耗 BOT Gas，不能证明转账或财务核验通过。</label>
+          我已核对任务参数和预计费用，登记将消耗我钱包中的 BOT Gas。</label>
         <button disabled={!writeEnabled || !acknowledged || busy || !!activeIntent}
           onClick={send}>在 BOT Chain 登记我的任务（仅一次）</button>
       </div>}
@@ -348,10 +348,6 @@ export default function TaskFlow() {
         <div><dt>区块 / Gas</dt><dd>{evidence.blockNumber.toString()} / {evidence.gasUsed.toString()}</dd></div>
         <div><dt>实际费用</dt><dd>{formatEther(evidence.feeWei)} BOT</dd></div></dl>}
       {notice && <p className="notice" role="status">{notice}</p>}
-    </section>
-    <section className="panel"><div className="panel-head"><span className="step">i</span><h2>技术与业务边界</h2></div>
-      <p className="muted">本流程使用原 TaskSpec 字段与规范化 SHA-256、TrustReceipt v1 EIP-712 消息及原 taskDigest 算法。签名在浏览器恢复为当前 requester；原始签名不上传或持久化。刷新后只能读回公开交易，无法重验已丢失的原始签名。</p>
-      <p className="muted">EIP-712 domain 没有 verifyingContract，消息不直接绑定 serviceSigner，expiresAt 为空。已部署合约只记录调用者、摘要和服务地址，不能代替服务方授权、转账核查或财务审计。此处 serviceSigner 是当前钱包本人，service_id 仅为内部演示标签。</p>
     </section>
   </>;
 }
