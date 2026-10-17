@@ -4,7 +4,8 @@ const fs = require("node:fs");
 const { generatePrivateKey, privateKeyToAccount } = require("viem/accounts");
 const { parseTaskSpec, verifySpec, stableHash, utcTimestamp, requireBotContext,
   taskDigest, typedDataDigest, verifySignature, taskDomain, taskTypes } = require("../.tmp/test-lib/lib/task.js");
-const { collectWallets, switchToBot, walletChainId, friendlyWalletError } = require("../.tmp/test-lib/lib/wallet.js");
+const { collectWallets, switchToBot, walletChainId, friendlyWalletError,
+  isWalletUserRejection } = require("../.tmp/test-lib/lib/wallet.js");
 const { anchorAbi } = require("../.tmp/test-lib/lib/anchor.js");
 const { confirmedDemo, requireConfirmedDemoBinding } = require("../.tmp/test-lib/lib/demo.js");
 const { recoverHistoricalDigest, requireHistoricalObservation } = require("../.tmp/test-lib/lib/historical.js");
@@ -140,6 +141,8 @@ for (const item of anchorAbi) {
   const rejected = { request: async () => { throw { code: 4001 }; } };
   await assert.rejects(() => switchToBot(rejected));
   assert.match(friendlyWalletError({ code: 4001 }), /取消/);
+  assert.equal(isWalletUserRejection({ cause: { code: 4001 } }), true);
+  assert.equal(isWalletUserRejection({ code: -32002, cause: new Error("timeout") }), false);
   await assert.rejects(() => walletChainId({ request: async () => "677" }));
   console.log("PASS: canonical task hashes, microseconds, tampering, requester/chain guards, EIP-712 recovery, EIP-6963 MetaMask/OKX discovery, add/switch/refusal protocol tests (mock providers only)");
 })().catch(error => { console.error(error); process.exitCode = 1; });

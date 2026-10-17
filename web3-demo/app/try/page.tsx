@@ -13,14 +13,14 @@ import { sha256, taskDomain, taskTypes, typedDataDigest, verifySpec,
 import { useWalletConnection } from "@/lib/use-wallet";
 import { createVisitorMessage, createVisitorTask, verifyVisitorCommitment,
   visitorServiceId, visitorServiceIdHash } from "@/lib/visitor-task";
-import { friendlyWalletError, walletAccounts, walletChainId } from "@/lib/wallet";
+import { friendlyWalletError, isWalletUserRejection, walletAccounts, walletChainId } from "@/lib/wallet";
 
 type Draft = { task: TaskSpec; message: TaskCommitmentMessage };
 type Signed = Draft & { signature: Hex; digest: Hex; serviceIdHash: Hex };
 type Quote = { digest: Hex; gas: bigint; limit: bigint; price: bigint;
   maxFee: bigint; balance: bigint; nonce: number; at: number };
 type Intent = Omit<ExpectedTaskAnchor, "transactionHash"> & { transactionHash?: Hex };
-const intentKey = "treasurytally-bot677-visitor-anchor-intent-v1";
+const intentKeyPrefix = "treasurytally-bot677-visitor-anchor-intent-v1:";
 const zeroAddress = "0x0000000000000000000000000000000000000000";
 const demoToken = "0xaBabc7Ddc03e501d190C676BF3d92ef0e6e87a3C";
 
@@ -56,6 +56,8 @@ export default function VisitorDemo() {
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState("");
   const [acknowledged, setAcknowledged] = useState(false);
+  const activeIntent = intent && wallet.address &&
+    intent.requester.toLowerCase() === wallet.address.toLowerCase() ? intent : null;
   const invalidateDraft = () => {
     setDraft(null); setSigned(null); setQuote(null); setAcknowledged(false);
   };
@@ -73,23 +75,32 @@ export default function VisitorDemo() {
     setWriteEnabled(false); setWriteStatus("公网写入状态检查中…");
     try {
       const response = await fetch("/api/visitor-write-status", { cache: "no-store" });
-      const result = await response.json() as { enabled?: boolean; scope?: string };
+      const result = await response.json() as { enabled?: boolean; scope?: string; reason?: string };
       if (!response.ok || result.scope !== "VISITOR_SELF_DEMO_ONLY" || typeof result.enabled !== "boolean")
         throw new Error("写入状态接口返回无效结果");
       setWriteEnabled(result.enabled);
-      setWriteStatus(result.enabled ? "访客 Demo 写入已开放；仍需本人钱包确认"
-        : "访客 Demo 写入未开放；可继续签名和只读模拟");
+      setWriteStatus(result.enabled ? "访客 Demo 写入已开放；仍需本人审阅并确认钱包交易"
+        : result.reason === "emergency_switch" ? "公网写入已由应急开关关闭；只读功能仍可使用"
+        : result.reason === "preview_environment" ? "预览部署默认禁止写入；生产 Vercel 才默认开放"
+        : result.reason === "unsupported_host" ? "此运行环境不开放主网写入"
+        : result.reason === "local_default_closed" ? "本地开发默认禁止写入；公网生产版按部署规则开放"
+        : "公网写入已关闭；可继续签名和只读模拟");
     } catch (error) { setWriteStatus("写入状态检查失败，保持关闭：" + friendlyWalletError(error)); }
   }, []);
   useEffect(() => { void refreshRpc(); void refreshWriteStatus();
-    setIntent(parseIntent(localStorage.getItem(intentKey))); }, [refreshRpc, refreshWriteStatus]);
+  }, [refreshRpc, refreshWriteStatus]);
+  useEffect(() => {
+    setIntent(wallet.address
+      ? parseIntent(localStorage.getItem(intentKeyPrefix + wallet.address.toLowerCase()))
+      : null);
+  }, [wallet.address]);
   useEffect(() => { setDraft(null); setSigned(null); setQuote(null); setAcknowledged(false);
   }, [wallet.address, wallet.chainId]);
   useEffect(() => {
-    if (!intent?.transactionHash) return;
-    void verifyTaskAnchorEvidence(intent as ExpectedTaskAnchor)
+    if (!activeIntent?.transactionHash) { setEvidence(null); return; }
+    void verifyTaskAnchorEvidence(activeIntent as ExpectedTaskAnchor)
       .then(setEvidence).catch(() => setEvidence(null));
-  }, [intent]);
+  }, [activeIntent]);
 
   async function requireContext(): Promise<Address> {
     if (!wallet.provider || !wallet.address || wallet.chainId !== 677)
@@ -175,7 +186,7 @@ export default function VisitorDemo() {
     finally { setBusy(false); }
   }
   async function send() {
-    if (!signed || !quote || !wallet.provider || !wallet.address || intent ||
+    if (!signed || !quote || !wallet.provider || !wallet.address || activeIntent ||
         !writeEnabled || !acknowledged || busy) return;
     setBusy(true); setNotice("");
     try {
@@ -186,28 +197,48 @@ export default function VisitorDemo() {
       if (Date.now() - quote.at > 60_000 || quote.digest !== signed.digest)
         throw new Error("费用预览已过期，请重新运行只读模拟");
       const requester = await requireContext();
+      const previousAttempt = parseIntent(localStorage.getItem(intentKeyPrefix + requester.toLowerCase()));
+      if (previousAttempt) {
+        setIntent(previousAttempt);
+        throw new Error("此钱包已有提交尝试；先只读核对交易状态，禁止重复提交");
+      }
       const verified = await verifyVisitorCommitment(signed.task, signed.message,
         signed.signature, requester);
       if (verified.digest !== signed.digest || verified.serviceIdHash !== signed.serviceIdHash)
         throw new Error("签名校验或任务摘要变化");
       const args = [signed.digest, signed.task.spec_hash, signed.serviceIdHash, requester] as const;
-      const [existing, nonce, gas, price, balance] = await Promise.all([
+      const [existing, latestNonce, nonce, gas, price, balance] = await Promise.all([
         publicClient.readContract({ address: anchorAddress, abi: anchorAbi,
           functionName: "tasks", args: [requester, signed.digest] }),
+        publicClient.getTransactionCount({ address: requester, blockTag: "latest" }),
         publicClient.getTransactionCount({ address: requester, blockTag: "pending" }),
         publicClient.estimateContractGas({ address: anchorAddress, abi: anchorAbi,
           functionName: "anchorTask", args, account: requester }),
         publicClient.getGasPrice(), publicClient.getBalance({ address: requester })
       ]);
-      if (existing[0] !== zeroAddress || nonce !== quote.nonce || gas > quote.limit ||
+      if (existing[0] !== zeroAddress || latestNonce !== nonce || nonce !== quote.nonce || gas > quote.limit ||
           price !== quote.price || balance < quote.maxFee)
         throw new Error("登记状态、nonce、Gas 报价或余额变化，请重新预览");
       await publicClient.simulateContract({ address: anchorAddress, abi: anchorAbi,
         functionName: "anchorTask", args, account: requester });
+      const finalRequester = await requireContext();
+      if (finalRequester.toLowerCase() !== requester.toLowerCase())
+        throw new Error("发送前钱包账户已变化；请重新连接、签名并预览");
+      const finalVerification = await verifyVisitorCommitment(signed.task, signed.message,
+        signed.signature, finalRequester);
+      if (finalVerification.digest !== signed.digest ||
+          finalVerification.serviceIdHash !== signed.serviceIdHash)
+        throw new Error("发送前签名、TaskSpec 或服务 ID 摘要复核失败");
+      const finalGateResponse = await fetch("/api/visitor-write-status", { cache: "no-store" });
+      const finalGate = await finalGateResponse.json() as { enabled?: boolean; scope?: string };
+      if (!finalGateResponse.ok || finalGate.enabled !== true ||
+          finalGate.scope !== "VISITOR_SELF_DEMO_ONLY")
+        throw new Error("公网写入应急开关已关闭；未请求钱包交易");
       const attempt: Intent = { requester, taskDigest: signed.digest,
         specHash: signed.task.spec_hash, serviceIdHash: signed.serviceIdHash,
         serviceSigner: requester };
-      localStorage.setItem(intentKey, JSON.stringify(attempt));
+      const storageKey = intentKeyPrefix + requester.toLowerCase();
+      localStorage.setItem(storageKey, JSON.stringify(attempt));
       setIntent(attempt);
       const client = createWalletClient({ account: requester, chain: botChain,
         transport: custom(wallet.provider) });
@@ -220,9 +251,8 @@ export default function VisitorDemo() {
         // A wallet rejection is conclusive: no transaction was broadcast. Clear
         // the local one-shot guard so the visitor may review a fresh quote and
         // decide again. Keep the guard for every ambiguous transport failure.
-        if (typeof error === "object" && error !== null &&
-            "code" in error && (error as { code?: unknown }).code === 4001) {
-          localStorage.removeItem(intentKey);
+        if (isWalletUserRejection(error)) {
+          localStorage.removeItem(storageKey);
           setIntent(null);
           setAcknowledged(false);
           throw new Error("你在钱包中拒绝了交易；未发送交易。可重新运行只读预览后自行决定是否重试。");
@@ -230,7 +260,7 @@ export default function VisitorDemo() {
         throw error;
       }
       const submitted = { ...attempt, transactionHash };
-      localStorage.setItem(intentKey, JSON.stringify(submitted));
+      localStorage.setItem(storageKey, JSON.stringify(submitted));
       setIntent(submitted);
       await publicClient.waitForTransactionReceipt({ hash: transactionHash,
         confirmations: 2, timeout: 60_000 });
@@ -240,9 +270,9 @@ export default function VisitorDemo() {
     finally { setBusy(false); }
   }
   async function recheck() {
-    if (!intent?.transactionHash) return;
+    if (!activeIntent?.transactionHash) return;
     setBusy(true); setNotice("");
-    try { setEvidence(await verifyTaskAnchorEvidence(intent as ExpectedTaskAnchor));
+    try { setEvidence(await verifyTaskAnchorEvidence(activeIntent as ExpectedTaskAnchor));
       setNotice("BOT 677 回执、事件与存储已重新核验。此读回不重验已丢失的原始签名。"); }
     catch (error) { setEvidence(null); setNotice("链上读回尚未成功：" + friendlyWalletError(error)); }
     finally { setBusy(false); }
@@ -278,6 +308,7 @@ export default function VisitorDemo() {
         <pre>{JSON.stringify({ domain: taskDomain, types: taskTypes,
           primaryType: "TaskCommitment", message: draft.message }, null, 2)}</pre>
         <p className="hint">EIP-712 消息摘要：{typedDataDigest(draft.message)}</p>
+        <p className="warning">签名前请知悉：此 EIP-712 domain 不含 verifyingContract，消息不签入 serviceSigner，expiresAt 为空；已部署合约不验证此签名。签名和登记只表示任务承诺，不证明资金流或财务核验通过。</p>
         <button onClick={sign} disabled={busy || !!signed}>Sign Task · 请求钱包签名</button>
       </div>}
     </section>
@@ -290,7 +321,7 @@ export default function VisitorDemo() {
         <div><dt>taskDigest</dt><dd>{signed.digest}</dd></div>
         <div><dt>serviceIdHash</dt><dd>{signed.serviceIdHash}</dd></div></dl>}
       <div className="actions"><button className="secondary" onClick={preview}
-        disabled={!signed || busy || !!intent}>运行只读 anchorTask 模拟与费用预览</button></div>
+        disabled={!signed || busy || !!activeIntent}>运行只读 anchorTask 模拟与费用预览</button></div>
       {quote && signed && <div className="preview"><h3>真实主网交易预览 · 尚未发送</h3>
         <dl className="facts"><div><dt>From</dt><dd>{signed.message.requester}</dd></div>
           <div><dt>To</dt><dd>{anchorAddress}</dd></div>
@@ -306,14 +337,14 @@ export default function VisitorDemo() {
         <label className="acknowledge"><input type="checkbox" checked={acknowledged}
           onChange={event => setAcknowledged(event.target.checked)}/>
           我确认这是自己的 Demo 核查任务；登记会消耗 BOT Gas，不能证明转账或财务核验通过。</label>
-        <button disabled={!writeEnabled || !acknowledged || busy || !!intent}
+        <button disabled={!writeEnabled || !acknowledged || busy || !!activeIntent}
           onClick={send}>在 BOT Chain 登记我的任务（仅一次）</button>
       </div>}
-      {intent && <div className="warning">本机已有提交尝试，禁止盲目重复：{intent.transactionHash
-        ? <a href={`https://scan.botchain.ai/tx/${intent.transactionHash}`} target="_blank"
-            rel="noreferrer">{intent.transactionHash} ↗</a>
+      {activeIntent && <div className="warning">此钱包已有提交尝试，禁止盲目重复：{activeIntent.transactionHash
+        ? <a href={`https://scan.botchain.ai/tx/${activeIntent.transactionHash}`} target="_blank"
+            rel="noreferrer">{activeIntent.transactionHash} ↗</a>
         : "尚无交易 Hash；请检查钱包活动和 nonce，勿再次点击。"}</div>}
-      {intent?.transactionHash && <button className="secondary" onClick={recheck} disabled={busy}>
+      {activeIntent?.transactionHash && <button className="secondary" onClick={recheck} disabled={busy}>
         只读重查回执、TaskAnchored 与 tasks 存储</button>}
       {evidence && <dl className="facts signed"><div><dt>链上状态</dt><dd>成功回执、事件与存储一致</dd></div>
         <div><dt>区块 / Gas</dt><dd>{evidence.blockNumber.toString()} / {evidence.gasUsed.toString()}</dd></div>

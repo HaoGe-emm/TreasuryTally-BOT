@@ -77,9 +77,21 @@ export async function walletAccounts(provider: Provider): Promise<string[]> {
   const accounts = await provider.request({ method: "eth_accounts" });
   return Array.isArray(accounts) ? accounts.filter(x => typeof x === "string") : [];
 }
+export function isWalletUserRejection(error: unknown): boolean {
+  const visited = new Set<object>();
+  let current: unknown = error;
+  for (let depth = 0; depth < 5 && typeof current === "object" && current !== null &&
+      !visited.has(current); depth++) {
+    visited.add(current);
+    const item = current as { code?: unknown; cause?: unknown };
+    if (item.code === 4001) return true;
+    current = item.cause;
+  }
+  return false;
+}
 export function friendlyWalletError(error: unknown): string {
   const value = error as { code?: number; message?: string };
-  if (value?.code === 4001) return "已取消钱包授权或网络切换。";
+  if (isWalletUserRejection(error)) return "已取消钱包授权或网络切换。";
   if (value?.code === -32002) return "钱包中已有待处理请求，请先处理。";
   return value?.message || "钱包操作失败，请检查扩展或网络。";
 }

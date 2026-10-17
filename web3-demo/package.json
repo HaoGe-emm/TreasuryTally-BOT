@@ -6,11 +6,11 @@
     "dev": "next dev --hostname 127.0.0.1",
     "build": "next build",
     "start": "next start --hostname 127.0.0.1",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit --incremental false",
     "test:anchor-local": "npm --prefix ../local-evm test",
     "test:unit": "tsc -p tsconfig.test.json && node scripts/check_units.cjs",
     "test:visitor-cross": "tsc -p tsconfig.test.json && node scripts/check_visitor_cross.cjs",
-    "test:write-status": "node --experimental-strip-types scripts/check_write_status.mjs"
+    "test:write-status": "node --experimental-strip-types scripts/check_write_status.mjs && node --experimental-strip-types scripts/check_visitor_write_gate.mjs"
   },
   "dependencies": {
     "next": "16.4.2",
