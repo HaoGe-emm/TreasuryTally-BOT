@@ -6,6 +6,7 @@ import { anchorAddress } from "@/lib/anchor";
 import { historicalAnchor, verifyTaskAnchorEvidence,
   type VerifiedTaskAnchor } from "@/lib/anchor-proof";
 import { friendlyWalletError } from "@/lib/wallet";
+import CopyButton from "./CopyButton";
 
 export default function HistoricalProof() {
   const [state, setState] = useState<"checking" | "verified" | "error">("checking");
@@ -19,8 +20,8 @@ export default function HistoricalProof() {
     } catch (failure) { setError(friendlyWalletError(failure)); setState("error"); }
   }, []);
   useEffect(() => { void refresh(); }, [refresh]);
-  return <section className="panel proof-panel" aria-labelledby="historical-heading">
-    <div className="panel-head"><span className="step">01</span><h2 id="historical-heading">已完成的主网任务登记</h2>
+  return <section id="chain-proof" className="panel proof-panel" aria-labelledby="historical-heading">
+    <div className="panel-head"><span className="step">04</span><h2 id="historical-heading">链上记录与验证</h2>
       <span className="pill">历史交易</span></div>
     <p className="muted">2026-10-17 的内部 Demo 任务已由请求者钱包在 BOT Chain 登记。以下交易和地址是公开链上证据；本页每次打开都会重新读取合约、回执、事件和存储。</p>
     <div className="proof-status" role="status">
@@ -33,9 +34,9 @@ export default function HistoricalProof() {
     {state === "error" && <p className="warning" role="status">BOT RPC 读取失败或证据不一致：{error}。请稍后重试，并到 BOTScan 核对交易；这不是新的成功核验。</p>}
     <dl className="facts">
       <div><dt>业务合约</dt><dd><a href={`https://scan.botchain.ai/address/${anchorAddress}`}
-        target="_blank" rel="noreferrer">{anchorAddress} ↗</a></dd></div>
+        target="_blank" rel="noreferrer">{anchorAddress} ↗</a> <CopyButton value={anchorAddress} label="复制合约地址" /></dd></div>
       <div><dt>anchorTask 交易</dt><dd><a href={`https://scan.botchain.ai/tx/${historicalAnchor.transactionHash}`}
-        target="_blank" rel="noreferrer">{historicalAnchor.transactionHash} ↗</a></dd></div>
+        target="_blank" rel="noreferrer">{historicalAnchor.transactionHash} ↗</a> <CopyButton value={historicalAnchor.transactionHash} label="复制交易 Hash" /></dd></div>
       <div><dt>taskDigest</dt><dd>{historicalAnchor.taskDigest}</dd></div>
       <div><dt>请求者</dt><dd>{historicalAnchor.requester}</dd></div>
       <div><dt>serviceSigner</dt><dd>{historicalAnchor.serviceSigner}</dd></div>

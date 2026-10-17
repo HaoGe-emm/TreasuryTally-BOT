@@ -10,7 +10,7 @@ npm ci
 npm run dev
 ```
 
-Open `http://127.0.0.1:3000`. `/` displays the historical registration and rechecks the deployment, transaction receipt, `TaskAnchored` event and contract storage against BOT Chain RPC. `/try` lets a visitor connect a supported EVM wallet, create a new TaskSpec, inspect its EIP-712 data, sign it, and run a read-only simulation and fee preview. `/lab` and `/deploy` are local-development-only legacy tools and return 404 in production.
+Open `http://127.0.0.1:3000`. The homepage `/` directly provides wallet connection, BOT Chain 677 switching, TaskSpec creation, EIP-712 review and signing, read-only simulation and fee preview, and the visitor's separately confirmed `anchorTask` transaction. Below the task flow, it rechecks the historical deployment, transaction receipt, `TaskAnchored` event and contract storage against BOT Chain RPC. The former `/try` URL permanently redirects to `/`; it contains no second transaction implementation. `/lab` and `/deploy` are local-development-only legacy tools and return 404 in production.
 
 ## Historical on-chain proof
 
@@ -24,7 +24,7 @@ This is an internal Demo task scope, not an ERC-8004 identity. Earlier read-only
 
 ## Visitor flow and public-write gate
 
-`/try` uses the original `TaskSpec` fields, canonicalization, SHA-256 and EIP-712/taskDigest algorithms. Python ↔ TypeScript cross-vectors are generated from the original Python model and tested with `npm run test:visitor-cross`; production visitor signing and recovery run in TypeScript and do not call a localhost Python service. The legacy `/api/verify-signed-demo` endpoint is restricted to local development and is not used by the visitor page.
+The homepage task flow uses the original `TaskSpec` fields, canonicalization, SHA-256 and EIP-712/taskDigest algorithms. Python ↔ TypeScript cross-vectors are generated from the original Python model and tested with `npm run test:visitor-cross`; production task signing and recovery run in TypeScript and do not call a localhost Python service. The legacy `/api/verify-signed-demo` endpoint is restricted to local development and is not used by the public task flow.
 
 The visitor becomes both requester and the self-demo `serviceSigner`; this does not represent an independently authorized service provider. The page requires the visitor to review the task and complete an EIP-712 signature, a read-only duplicate check/simulation/fee quote, an explicit acknowledgement, and a separate wallet transaction confirmation. It records no automatic transaction. On Vercel Production, visitor writes are enabled by default when `ENABLE_PUBLIC_DEMO_WRITES` is unset or `true`; set it to `false` to close the gate. The independent emergency switch `DISABLE_PUBLIC_DEMO_WRITES=true` always closes writes. Local development and Vercel Preview default closed. This website gate does not change the deployed contract, which is permissionless.
 

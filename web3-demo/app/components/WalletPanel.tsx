@@ -1,6 +1,7 @@
 "use client";
 
 import { useWalletConnection } from "@/lib/use-wallet";
+import CopyButton from "./CopyButton";
 
 type WalletState = ReturnType<typeof useWalletConnection>;
 export default function WalletPanel({ wallet }: { wallet: WalletState }) {
@@ -21,7 +22,8 @@ export default function WalletPanel({ wallet }: { wallet: WalletState }) {
         onClick={wallet.switchNetwork}>切换到 BOT Chain 677</button>}
     </div>
     <dl className="facts">
-      <div><dt>当前访客钱包</dt><dd>{wallet.address || "尚未连接"}</dd></div>
+      <div><dt>当前钱包</dt><dd>{wallet.address || "尚未连接"} {wallet.address &&
+        <CopyButton value={wallet.address} label="复制当前钱包地址" />}</dd></div>
       <div><dt>钱包 Chain ID</dt><dd>{wallet.chainId ?? "—"}</dd></div>
     </dl>
     {wallet.error && <p className="warning" role="status">{wallet.error}</p>}
