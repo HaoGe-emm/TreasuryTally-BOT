@@ -14,9 +14,7 @@ export const publicClient = createPublicClient({
   chain: botChain, transport: http(undefined, { timeout: 12_000, retryCount: 1 })
 });
 
-const configuredAddress = process.env.NEXT_PUBLIC_ANCHOR_ADDRESS || "";
-const configuredHash = process.env.NEXT_PUBLIC_ANCHOR_RUNTIME_SHA256 || "";
-export const anchorAddress = /^0x[\da-fA-F]{40}$/.test(configuredAddress)
-  ? configuredAddress as Address : null;
-export const anchorRuntimeHash = /^0x[\da-fA-F]{64}$/.test(configuredHash)
-  ? configuredHash.toLowerCase() as Hex : null;
+// Public, fixed deployment verified in Stage 3C. Production reads must not rely
+// on a developer's .env.local or silently point to another contract.
+export const anchorAddress: Address = "0xAf845BA2D1aF0e842FD2185fa081720D6D3D7148";
+export const anchorRuntimeHash: Hex = "0xe19c6b11680cbd60c5fb6061d52052c65596e48b9c10cbc59415538e03a75eaf";

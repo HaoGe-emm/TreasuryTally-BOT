@@ -9,6 +9,7 @@
     "typecheck": "tsc --noEmit",
     "test:anchor-local": "npm --prefix ../local-evm test",
     "test:unit": "tsc -p tsconfig.test.json && node scripts/check_units.cjs",
+    "test:visitor-cross": "tsc -p tsconfig.test.json && node scripts/check_visitor_cross.cjs",
     "test:write-status": "node --experimental-strip-types scripts/check_write_status.mjs"
   },
   "dependencies": {

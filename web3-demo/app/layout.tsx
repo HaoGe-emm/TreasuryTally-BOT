@@ -3,7 +3,7 @@ import "./style.css";
 
 export const metadata: Metadata = {
   title: "TreasuryTally · BOT Chain",
-  description: "可复核的任务承诺与 BOT Chain 本地开发演示"
+  description: "TreasuryTally 在 BOT Chain Mainnet 登记任务承诺，并公开读回真实交易、事件与合约状态。"
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
