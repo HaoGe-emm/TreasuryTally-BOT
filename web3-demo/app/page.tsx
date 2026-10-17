@@ -26,7 +26,7 @@ export default function Home() {
       <section className="panel"><div className="panel-head"><span className="step">03</span><h2>自己创建一份演示承诺</h2></div>
         <p className="muted">新访客可以使用自己的钱包和选定的 BOT 区块范围生成新的 Demo TaskSpec，审阅完整 EIP-712 消息，再主动签名。写链前会检查合约、重复登记、模拟结果和费用，并由钱包本人确认。</p>
         <a className="button-link" href="/try">打开访客任务流程 →</a>
-        <p className="hint">此流程不复用历史请求者的摘要。公网写入入口默认关闭，待独立发布授权后才会开放；只读预览不受影响。</p>
+        <p className="hint">Production 已开放访客主动发起 BOT Chain 677 主网登记。请使用自己的钱包和任务摘要，由本人签名、审阅交易参数与费用预览，再主动提交并在钱包中确认，自行支付 BOT Gas。应急开关可暂停写入，只读预览不受影响。</p>
       </section>
     </div>
     <section className="panel"><div className="panel-head"><span className="step">?</span><h2>任务范围与技术限制</h2></div>
