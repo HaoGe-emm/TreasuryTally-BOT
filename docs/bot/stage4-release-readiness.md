@@ -24,7 +24,7 @@ Every visitor task is generated from the connected requester, a new random task 
 - Framework: Next.js
 - Install: `npm ci` from `package-lock.json`
 - Build: `npm run build`
-- Output Directory: use the Next.js platform integration (custom Next build directory is `.next-build`)
+- Output Directory: use the Next.js platform integration (Vercel uses `.next`; local builds use `.next-build`)
 - Production environment: leave `ENABLE_PUBLIC_DEMO_WRITES` unset or set it to `true`; remove any inherited `false` value from the prior read-only plan
 - Emergency stop: set `DISABLE_PUBLIC_DEMO_WRITES=true`; normal state is unset or `false`
 - Preview/local environment: default closed; the development gate requires explicit `ENABLE_PUBLIC_DEMO_WRITES=true`
