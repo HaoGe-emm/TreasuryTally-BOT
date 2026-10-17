@@ -11,7 +11,7 @@ export const anchorAbi = parseAbi([
 ]);
 
 export const publicClient = createPublicClient({
-  chain: botChain, transport: http(undefined, { timeout: 8_000, retryCount: 0 })
+  chain: botChain, transport: http(undefined, { timeout: 12_000, retryCount: 1 })
 });
 
 const configuredAddress = process.env.NEXT_PUBLIC_ANCHOR_ADDRESS || "";

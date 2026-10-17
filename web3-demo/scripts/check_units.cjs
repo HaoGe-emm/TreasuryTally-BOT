@@ -7,7 +7,7 @@ const { parseTaskSpec, verifySpec, stableHash, utcTimestamp, requireBotContext,
 const { collectWallets, switchToBot, walletChainId, friendlyWalletError } = require("../.tmp/test-lib/lib/wallet.js");
 const { anchorAbi } = require("../.tmp/test-lib/lib/anchor.js");
 const { confirmedDemo, requireConfirmedDemoBinding } = require("../.tmp/test-lib/lib/demo.js");
-const { requireHistoricalObservation } = require("../.tmp/test-lib/lib/historical.js");
+const { recoverHistoricalDigest, requireHistoricalObservation } = require("../.tmp/test-lib/lib/historical.js");
 const historical = require("../.tmp/test-lib/public/bot677-demo/historical-signature-observation.json");
 const compiledAbi = JSON.parse(fs.readFileSync("public/CommitmentAnchor.paris.json", "utf8")).abi;
 function abiShape(item) {
@@ -60,6 +60,14 @@ for (const item of anchorAbi) {
   const reportSha = "0x" + createHash("sha256").update(fs.readFileSync(
     "../docs/bot/stage3d-signature-observation.md")).digest("hex");
   assert.equal(reportSha, historical.source_report_sha256, "the public historical record has its original report");
+  const recovery = { task: confirmedTask, specHash: confirmedDemo.specHash,
+    address: confirmedDemo.requester, walletAccounts: [confirmedDemo.requester],
+    walletChainId: 677, serviceId: confirmedDemo.serviceId,
+    serviceSigner: confirmedDemo.serviceSigner };
+  assert.equal(await recoverHistoricalDigest(recovery), confirmedDemo.historicalTaskDigest);
+  await assert.rejects(() => recoverHistoricalDigest({ ...recovery, walletChainId: 1 }), /钱包账户或钱包 Chain ID/);
+  await assert.rejects(() => recoverHistoricalDigest({ ...recovery, walletAccounts: [confirmedDemo.serviceSigner] }), /钱包账户或钱包 Chain ID/);
+  await assert.rejects(() => recoverHistoricalDigest({ ...recovery, specHash: "0x" + "00".repeat(32) }), /任务哈希或服务 ID/);
   const originalDigest = historical.task_digest;
   historical.task_digest = "0x" + "00".repeat(32);
   assert.throws(() => requireHistoricalObservation(), /不一致/);

@@ -8,7 +8,7 @@ import { createWalletClient } from "viem";
 import { anchorAbi, anchorAddress, anchorRuntimeHash, publicClient } from "@/lib/anchor";
 import { botChain } from "@/lib/chain";
 import { confirmedDemo, matchesConfirmedDemoBinding, requireConfirmedDemoBinding } from "@/lib/demo";
-import { historicalObservation, requireHistoricalObservation } from "@/lib/historical";
+import { historicalObservation, recoverHistoricalDigest, requireHistoricalObservation } from "@/lib/historical";
 import signingPreview from "@/public/bot677-demo/task-commitment-preview.json";
 import { collectWallets, friendlyWalletError, switchToBot, walletAccounts, walletChainId,
   type Provider, type WalletChoice } from "@/lib/wallet";
@@ -58,6 +58,18 @@ function requireReviewedSigningPreview(): void {
     throw new Error("签名前消息与已审核的 BOT Demo EIP-712 预览不一致");
 }
 
+async function requireLiveBotContract(): Promise<void> {
+  if (!anchorAddress || !anchorRuntimeHash)
+    throw new Error("缺少经过审阅的主网合约地址或字节码哈希");
+  const rpcChain = await publicClient.getChainId();
+  if (rpcChain !== 677) throw new Error(`BOT RPC 返回 Chain ID ${rpcChain}，预期 677`);
+  const code = await publicClient.getCode({ address: anchorAddress });
+  if (!code || code === "0x") throw new Error("目标地址没有合约字节码");
+  const actual = await sha256(hexToBytes(code));
+  if (actual.toLowerCase() !== anchorRuntimeHash.toLowerCase())
+    throw new Error("目标合约运行时代码 SHA-256 与已部署版本不一致");
+}
+
 async function verifySignatureWithPython(
   signature: Hex, message: TaskCommitmentMessage, specHash: Hex,
   serviceIdHash: Hex, serviceSigner: Address
@@ -102,6 +114,7 @@ export default function Home() {
   const [address, setAddress] = useState<Address | null>(null);
   const [chainId, setChainId] = useState<number | null>(null);
   const [rpcChainId, setRpcChainId] = useState<number | null>(null);
+  const [rpcError, setRpcError] = useState("");
   const [preview, setPreview] = useState<Preview | null>(null);
   const [serviceId, setServiceId] = useState("");
   const [serviceSigner, setServiceSigner] = useState("");
@@ -145,9 +158,12 @@ export default function Home() {
     catch { setSignRequestAttempted(false); }
   }, []);
   const refreshRpc = useCallback(async () => {
-    setRpcChainId(null);
+    setRpcError("");
     try { setRpcChainId(await publicClient.getChainId()); }
-    catch { setRpcChainId(null); }
+    catch (error) {
+      setRpcChainId(null);
+      setRpcError("BOT RPC 连接失败或超时：" + friendlyWalletError(error));
+    }
   }, []);
   useEffect(() => { void refreshRpc(); }, [refreshRpc]);
   // An injected provider never becomes the default signing choice.
@@ -196,23 +212,22 @@ export default function Home() {
       provider.removeListener?.("disconnect", disconnected);
     };
   }, [provider, refreshWallet]);
-  useEffect(() => {
+  const refreshContract = useCallback(async () => {
     if (!anchorAddress || !anchorRuntimeHash) {
       setContractStatus("尚未部署：未配置经过审阅的主网地址与字节码哈希");
       return;
     }
-    void (async () => {
-      try {
-        if (await publicClient.getChainId() !== 677) throw new Error("RPC Chain ID 不匹配");
-        const code = await publicClient.getCode({ address: anchorAddress });
-        if (!code || code === "0x") throw new Error("地址上没有合约字节码");
-        const actual = await sha256(hexToBytes(code));
-        if (actual.toLowerCase() !== anchorRuntimeHash.toLowerCase())
-          throw new Error("合约字节码 SHA-256 与审阅值不符");
-        setContractStatus("已通过 RPC 字节码核对");
-      } catch (error) { setContractStatus("合约校验失败：" + friendlyWalletError(error)); }
-    })();
+    setContractStatus("正在通过 BOT RPC 核对合约");
+    try {
+      await requireLiveBotContract();
+      setRpcChainId(677);
+      setRpcError("");
+      setContractStatus("已通过 RPC 字节码核对");
+    } catch (error) {
+      setContractStatus("合约只读核验失败：" + friendlyWalletError(error));
+    }
   }, []);
+  useEffect(() => { void refreshContract(); }, [refreshContract]);
 
   async function connect() {
     if (!selected) { setNotice("未检测到 EVM 钱包，请安装 MetaMask 或 OKX Wallet。"); return; }
@@ -295,26 +310,23 @@ export default function Home() {
     finally { setBusy(false); }
   }
   async function restoreHistoricalDigest() {
-    if (!provider || !address || !preview || !anchorAddress) return;
+    if (!provider || !address || !preview) return;
     setBusy(true); setNotice(""); setAnchorQuote(null);
     try {
-      if (contractStatus !== "已通过 RPC 字节码核对")
-        throw new Error("合约字节码尚未通过 BOT RPC 核对");
       requireReviewedSigningPreview();
-      requireBotContext(preview.task, confirmedDemo.requester,
-        (await walletAccounts(provider))[0], await walletChainId(provider), await publicClient.getChainId());
-      requireConfirmedDemoBinding(preview.task, address, serviceId, serviceSigner);
-      const digest = requireHistoricalObservation();
-      const serviceHash = await sha256(new TextEncoder().encode(serviceId));
-      if (preview.hash !== confirmedDemo.specHash || serviceHash !== historicalObservation.service_id_hash)
-        throw new Error("当前任务哈希或服务 ID 与既往记录不一致");
-      const stored = await publicClient.readContract({ address: anchorAddress, abi: anchorAbi,
-        functionName: "tasks", args: [address, digest] });
-      if (stored[0] !== zeroAddress) throw new Error("该摘要已登记，不得重复提交");
+      const [accounts, walletNetwork] = await Promise.all([
+        walletAccounts(provider), walletChainId(provider)
+      ]);
+      const digest = await recoverHistoricalDigest({ task: preview.task, specHash: preview.hash,
+        address, walletAccounts: accounts, walletChainId: walletNetwork,
+        serviceId, serviceSigner });
       setSigned(null);
       setHistoricalDigest(digest);
-      setNotice("已载入先前观察到双重校验成功的公开摘要；本次没有原始签名，未重新验签。");
-    } catch (error) { setHistoricalDigest(null); setNotice(friendlyWalletError(error)); }
+      setNotice("历史摘要已从固定本地记录载入；本次未重新验签。请继续运行主网只读模拟，核验 RPC、合约和登记状态。");
+    } catch (error) {
+      setHistoricalDigest(null);
+      setNotice("历史摘要载入失败：" + friendlyWalletError(error));
+    }
     finally { setBusy(false); }
   }
   async function signTask() {
@@ -384,9 +396,14 @@ export default function Home() {
   async function prepareAnchorQuote() {
     if (!provider || !address || !activeDigest || !preview || !anchorAddress || !anchorRuntimeHash) return;
     setBusy(true); setNotice(""); setAnchorQuote(null);
+    let check = "BOT RPC Chain ID 与合约字节码";
     try {
       if (anchorIntent) throw new Error("已有本机提交记录；请先读回回执，禁止重复发送");
-      if (contractStatus !== "已通过 RPC 字节码核对") throw new Error("合约字节码未通过核对");
+      await requireLiveBotContract();
+      setRpcChainId(677);
+      setRpcError("");
+      setContractStatus("已通过 RPC 字节码核对");
+      check = "钱包账户、网络与固定任务";
       requireReviewedSigningPreview();
       requireBotContext(preview.task, confirmedDemo.requester, (await walletAccounts(provider))[0],
         await walletChainId(provider), await publicClient.getChainId());
@@ -403,12 +420,15 @@ export default function Home() {
       const serviceHash = await sha256(new TextEncoder().encode(serviceId));
       if (preview.hash !== confirmedDemo.specHash || serviceHash !== signingPreview.service_id_hash)
         throw new Error("TaskSpec 或服务哈希已变化");
+      check = "合约重复登记读回";
       const existing = await publicClient.readContract({ address: anchorAddress, abi: anchorAbi,
         functionName: "tasks", args: [address, activeDigest] });
       if (existing[0] !== zeroAddress) throw new Error("该请求者的任务摘要已登记");
+      check = "anchorTask eth_call 模拟";
       const args = [activeDigest, preview.hash, serviceHash, getAddress(serviceSigner)] as const;
       await publicClient.simulateContract({ address: anchorAddress, abi: anchorAbi,
         functionName: "anchorTask", args, account: address });
+      check = "Gas、余额与账户 nonce 只读报价";
       const [gas, gasPrice, balance, latest, pending] = await Promise.all([
         publicClient.estimateContractGas({ address: anchorAddress, abi: anchorAbi,
           functionName: "anchorTask", args, account: address }),
@@ -423,7 +443,7 @@ export default function Home() {
       setAnchorQuote({ digest: activeDigest, gas, gasLimit, gasPrice, maxFee,
         balance, nonce: pending, createdAt: Date.now() });
       setNotice("只读模拟和 Gas 估算通过；这不是签名或主网交易批准。");
-    } catch (error) { setNotice(friendlyWalletError(error)); }
+    } catch (error) { setNotice(`只读预览失败（${check}）：${friendlyWalletError(error)}`); }
     finally { setBusy(false); }
   }
   async function readAnchorReceipt(hash: Hex, digest: Hex) {
@@ -549,10 +569,12 @@ export default function Home() {
     // Reload uses only the public digest/hash hint; every success label requires RPC receipt and storage.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [anchorIntent?.hash, contractStatus]);
-  const readyToSign = !!(provider && address && preview && preview.task.chain_id === 677 &&
-    chainId === 677 && rpcChainId === 677 && isAddress(serviceSigner) && serviceId.trim() &&
-    contractStatus === "已通过 RPC 字节码核对" &&
+  const readyForFixedDemo = !!(provider && address && preview && preview.task.chain_id === 677 &&
+    chainId === 677 && isAddress(serviceSigner) && serviceId.trim() &&
     matchesConfirmedDemoBinding(preview.task, address, serviceId, serviceSigner));
+  const readyToSign = readyForFixedDemo && rpcChainId === 677 &&
+    contractStatus === "已通过 RPC 字节码核对";
+  const readyToQuote = !!(readyForFixedDemo && activeDigest && anchorAddress && anchorRuntimeHash);
   const readyToAnchor = !!(readyToSign && activeDigest && anchorQuote &&
     anchorQuote.digest === activeDigest && !anchorIntent &&
     (signed || historicalAcknowledged) &&
@@ -581,6 +603,7 @@ export default function Home() {
           <div><dt>钱包 Chain ID</dt><dd>{chainId ?? "—"}</dd></div>
           <div><dt>RPC Chain ID</dt><dd>{rpcChainId ?? "无法读取"} <button className="secondary" onClick={() => void refreshRpc()}>重试</button></dd></div>
           <div><dt>当前状态</dt><dd>{address ? chainId === 677 ? "钱包已连接至 BOT Chain" : "网络不匹配" : "等待连接"}</dd></div></dl>
+        {rpcError && <p className="warning">{rpcError}。这不会清除已载入的历史摘要；只读预览会重新检查 RPC。</p>}
       </section>
       <section className="panel">
         <div className="panel-head"><span className="step">02</span><h2>任务承诺预览</h2></div>
@@ -606,8 +629,8 @@ export default function Home() {
             placeholder="0x…" autoComplete="off"/></label></div>
         <button className="secondary" onClick={prepareTask} disabled={!readyToSign || busy}>准备任务承诺</button>
         <div className="warning">既往记录：2026-10-16 页面曾显示该固定 TaskCommitment 通过 TypeScript 与原 Python 模型校验，并产生摘要 {historicalObservation.task_digest}。原始签名未保存；当前页面无法独立重验该签名。</div>
-        <button className="secondary" onClick={restoreHistoricalDigest} disabled={!readyToSign || busy || !!anchorIntent}>
-          载入先前已核验的公开摘要（只读检查）</button>
+        <button className="secondary" onClick={restoreHistoricalDigest} disabled={!readyForFixedDemo || busy || !!anchorIntent}>
+          载入先前已核验的公开摘要（本地记录）</button>
         {prepared && <div className="preview"><h3>待签消息已与审阅文件核对</h3><pre>{JSON.stringify(reviewedTypedData, null, 2)}</pre>
           <p className="hint">服务签名者 {prepared.serviceSigner} 不属于上游任务签名字段；本地应用规则将它与内部 Demo 服务绑定，原合约不验证此授权。</p>
           <button onClick={signTask} disabled={busy || !taskSignaturesEnabled || pendingSignatureAvailable || signRequestAttempted || !!signed}>签署 EIP-712 任务承诺</button>
@@ -625,7 +648,8 @@ export default function Home() {
           <p>来源：{historicalObservation.source_report}；记录 SHA-256：{historicalObservation.source_report_sha256}。</p>
           <dl className="facts"><div><dt>先前确认的 taskDigest</dt><dd>{historicalDigest}</dd></div>
             <div><dt>请求者</dt><dd>{confirmedDemo.requester}</dd></div>
-            <div><dt>原始签名</dt><dd>未保存；当前无法独立重验</dd></div></dl></div>}
+            <div><dt>原始签名</dt><dd>未保存；当前无法独立重验</dd></div></dl>
+          <p className="hint">仅载入本地固定记录；主网 Chain ID、合约字节码、重复登记和 eth_call 将在下一步只读预览中检查。</p></div>}
       </section>
     </div>
     <section className="panel"><div className="panel-head"><span className="step">02A</span><h2>完整 EIP-712 签名前预览</h2>
@@ -645,10 +669,10 @@ export default function Home() {
       <p className="muted">登记只证明请求者钱包在 BOT Chain 上承诺过指定任务摘要与服务签名者，不证明服务报表真实，也不代表财务核验通过。</p>
       <dl className="facts"><div><dt>候选合约</dt><dd>CommitmentAnchor.sol</dd></div>
         <div><dt>主网地址</dt><dd>{anchorAddress || "尚未部署"}</dd></div>
-        <div><dt>字节码核对</dt><dd>{contractStatus}</dd></div>
+        <div><dt>字节码核对</dt><dd>{contractStatus} <button className="secondary" onClick={() => void refreshContract()}>重试只读核验</button></dd></div>
         <div><dt>交易</dt><dd>{tx ? <a href={`https://scan.botchain.ai/tx/${tx}`} target="_blank" rel="noreferrer">{tx} ↗</a> : "未提交"}</dd></div></dl>
       {activeDigest && !anchorIntent && <button className="secondary" onClick={prepareAnchorQuote}
-        disabled={busy || !readyToSign}>运行只读 anchorTask 模拟与费用预览</button>}
+        disabled={busy || !readyToQuote}>运行只读 anchorTask 模拟与费用预览</button>}
       {anchorQuote && activeDigest && <div className="preview"><h3>anchorTask 交易预览 · 未批准发送</h3>
         <dl className="facts"><div><dt>From</dt><dd>{confirmedDemo.requester}</dd></div>
           <div><dt>To</dt><dd>{anchorAddress}</dd></div>
