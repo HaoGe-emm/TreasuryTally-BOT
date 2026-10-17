@@ -124,6 +124,33 @@ assert.equal((await transaction(requesterWallet, "anchorTask", taskArgs)).status
 const otherNamespace = await transaction(strangerWallet, "anchorTask", taskArgs);
 assert.equal(otherNamespace.status, "success");
 
+// A separate local transaction proves the deployed ABI accepts the previously
+// recorded digest as four public arguments; no signature is supplied to Solidity.
+// This is still a local EVM test, never BOT mainnet evidence.
+const historical = JSON.parse(readFileSync(join(root,
+  "web3-demo/public/bot677-demo/historical-signature-observation.json"), "utf8"));
+assert.equal(historical.signature_retained, false);
+const historyArgs = [historical.task_digest, historical.spec_hash,
+  historical.service_id_hash, historical.service_signer];
+await publicClient.simulateContract({ address: contract, abi: artifact.abi,
+  functionName: "anchorTask", args: historyArgs, account: requester.address });
+assert.ok((await publicClient.estimateContractGas({ address: contract, abi: artifact.abi,
+  functionName: "anchorTask", args: historyArgs, account: requester.address })) > 0n);
+const historyReceipt = await transaction(requesterWallet, "anchorTask", historyArgs);
+assert.equal(historyReceipt.status, "success");
+const historyEvent = decodeEventLog({ abi: artifact.abi,
+  data: historyReceipt.logs[0].data, topics: historyReceipt.logs[0].topics });
+assert.equal(historyEvent.eventName, "TaskAnchored");
+assert.equal(historyEvent.args.taskDigest, historical.task_digest);
+assert.equal(historyEvent.args.specHash, historical.spec_hash);
+assert.equal(historyEvent.args.serviceIdHash, historical.service_id_hash);
+assert.equal(historyEvent.args.serviceSigner.toLowerCase(), historical.service_signer.toLowerCase());
+assert.equal(historyEvent.args.requester.toLowerCase(), requester.address.toLowerCase());
+const historyStored = await publicClient.readContract({ address: contract, abi: artifact.abi,
+  functionName: "tasks", args: [requester.address, historical.task_digest] });
+assert.equal(historyStored[1].toLowerCase(), historical.service_signer.toLowerCase());
+assert.equal((await transaction(requesterWallet, "anchorTask", historyArgs)).status, "reverted");
+
 // Model-shaped synthetic report only for the isolated local EVM, matching the
 // upstream check_m8_anchor_local.py zero-record submission. No financial claim.
 const nowJson = "2026-10-16T00:00:00Z";

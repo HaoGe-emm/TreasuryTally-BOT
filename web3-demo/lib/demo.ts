@@ -6,6 +6,8 @@ export const confirmedDemo = {
   taskId: "bot677-demo-usdt-26879920-two-accounts",
   specHash: "0x9e0073e83868993f4da3bc013fe8aca7e90af7a99fb80bcda8d593963528d093",
   typedDataDigest: "0x193954b4c310b54ac5b93bf9cb546d31f831f40b76378a100c53010d93fb7f2a",
+  historicalTaskDigest: "0xc3702a7758dc0eb150ed0a51c13c8c30dd7b6b850f41c0abdcb446778361b25d",
+  historicalReportSha256: "0xeab1bdd8a29e98b207a6ef0c6d1ad766cc0b48fb4af980fd8ec79d49bfc225ac",
   requester: "0x89F415bb42e356E8b892C10B05522e0a8Ef151F3",
   serviceId: "treasurytally-bot-internal-demo-20261016",
   serviceSigner: "0xb6bF6a936F529650992B71e2DeB79E80Fd3da71B"

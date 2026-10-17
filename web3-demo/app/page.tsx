@@ -2,20 +2,19 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  custom, decodeEventLog, formatEther, getAddress, hexToBytes, isAddress, type Address, type Hex
+  custom, decodeEventLog, decodeFunctionData, formatEther, getAddress, hexToBytes, isAddress, type Address, type Hex
 } from "viem";
 import { createWalletClient } from "viem";
 import { anchorAbi, anchorAddress, anchorRuntimeHash, publicClient } from "@/lib/anchor";
 import { botChain } from "@/lib/chain";
 import { confirmedDemo, matchesConfirmedDemoBinding, requireConfirmedDemoBinding } from "@/lib/demo";
+import { historicalObservation, requireHistoricalObservation } from "@/lib/historical";
 import signingPreview from "@/public/bot677-demo/task-commitment-preview.json";
 import { collectWallets, friendlyWalletError, switchToBot, walletAccounts, walletChainId,
   type Provider, type WalletChoice } from "@/lib/wallet";
 import { parseTaskSpec, requireBotContext, sha256, taskDigest, taskDomain, taskTypes, utcTimestamp,
   typedDataDigest, verifySignature, verifySpec, type TaskCommitmentMessage, type TaskSpec } from "@/lib/task";
 
-const mainnetWritesEnabled = process.env.NODE_ENV === "development" &&
-  process.env.NEXT_PUBLIC_ENABLE_MAINNET_WRITES === "true";
 const samplePath = "/demo-task-spec.json";
 const confirmedDemoPath = "/bot677-demo/task-spec.json";
 type Preview = { task: TaskSpec; hash: Hex; label: string };
@@ -107,9 +106,12 @@ export default function Home() {
   const [serviceId, setServiceId] = useState("");
   const [serviceSigner, setServiceSigner] = useState("");
   const [signed, setSigned] = useState<Signed | null>(null);
+  const [historicalDigest, setHistoricalDigest] = useState<Hex | null>(null);
+  const [historicalAcknowledged, setHistoricalAcknowledged] = useState(false);
   const pendingSignature = useRef<Hex | null>(null);
   const [pendingSignatureAvailable, setPendingSignatureAvailable] = useState(false);
   const [taskSignaturesEnabled, setTaskSignaturesEnabled] = useState(false);
+  const [mainnetWritesEnabled, setMainnetWritesEnabled] = useState(false);
   const [signRequestAttempted, setSignRequestAttempted] = useState(false);
   const [prepared, setPrepared] = useState<Prepared | null>(null);
   const [contractStatus, setContractStatus] = useState("尚未部署");
@@ -119,8 +121,17 @@ export default function Home() {
   const [anchorQuote, setAnchorQuote] = useState<AnchorQuote | null>(null);
   const [anchorRecord, setAnchorRecord] = useState<AnchorRecord | null>(null);
   const [anchorIntent, setAnchorIntent] = useState<{ digest: Hex; hash?: Hex } | null>(null);
+  const activeDigest = signed?.digest ?? historicalDigest;
 
   useEffect(() => collectWallets(setWallets), []);
+  const refreshWriteApproval = useCallback(async () => {
+    try {
+      const response = await fetch("/api/mainnet-write-status", { cache: "no-store" });
+      const status = await response.json();
+      setMainnetWritesEnabled(response.ok && status.enabled === true);
+    } catch { setMainnetWritesEnabled(false); }
+  }, []);
+  useEffect(() => { void refreshWriteApproval(); }, [refreshWriteApproval]);
   useEffect(() => {
     let active = true;
     void fetch("/api/verify-signed-demo", { cache: "no-store" })
@@ -142,7 +153,7 @@ export default function Home() {
   // An injected provider never becomes the default signing choice.
   const selected = useMemo(() => wallets.find(x => x.id === choiceId) || null, [wallets, choiceId]);
   useEffect(() => {
-    setPrepared(null); setSigned(null); setAnchorQuote(null);
+    setPrepared(null); setSigned(null); setHistoricalDigest(null); setHistoricalAcknowledged(false); setAnchorQuote(null);
     pendingSignature.current = null; setPendingSignatureAvailable(false);
   }, [address, chainId, preview, serviceId, serviceSigner]);
   useEffect(() => {
@@ -263,7 +274,7 @@ export default function Home() {
   }
   async function prepareTask() {
     if (!provider || !address || !preview) return;
-    setBusy(true); setNotice(""); setSigned(null);
+    setBusy(true); setNotice(""); setSigned(null); setHistoricalDigest(null); setAnchorQuote(null);
     try {
       if (contractStatus !== "已通过 RPC 字节码核对")
         throw new Error("部署合约尚未通过 BOT RPC 运行时代码核验");
@@ -283,9 +294,33 @@ export default function Home() {
     } catch (error) { setNotice(friendlyWalletError(error)); }
     finally { setBusy(false); }
   }
+  async function restoreHistoricalDigest() {
+    if (!provider || !address || !preview || !anchorAddress) return;
+    setBusy(true); setNotice(""); setAnchorQuote(null);
+    try {
+      if (contractStatus !== "已通过 RPC 字节码核对")
+        throw new Error("合约字节码尚未通过 BOT RPC 核对");
+      requireReviewedSigningPreview();
+      requireBotContext(preview.task, confirmedDemo.requester,
+        (await walletAccounts(provider))[0], await walletChainId(provider), await publicClient.getChainId());
+      requireConfirmedDemoBinding(preview.task, address, serviceId, serviceSigner);
+      const digest = requireHistoricalObservation();
+      const serviceHash = await sha256(new TextEncoder().encode(serviceId));
+      if (preview.hash !== confirmedDemo.specHash || serviceHash !== historicalObservation.service_id_hash)
+        throw new Error("当前任务哈希或服务 ID 与既往记录不一致");
+      const stored = await publicClient.readContract({ address: anchorAddress, abi: anchorAbi,
+        functionName: "tasks", args: [address, digest] });
+      if (stored[0] !== zeroAddress) throw new Error("该摘要已登记，不得重复提交");
+      setSigned(null);
+      setHistoricalDigest(digest);
+      setNotice("已载入先前观察到双重校验成功的公开摘要；本次没有原始签名，未重新验签。");
+    } catch (error) { setHistoricalDigest(null); setNotice(friendlyWalletError(error)); }
+    finally { setBusy(false); }
+  }
   async function signTask() {
     if (!taskSignaturesEnabled || !provider || !address || !preview || !prepared) return;
-    setBusy(true); setNotice(""); setSigned(null);
+    setBusy(true); setNotice(""); setSigned(null); setHistoricalDigest(null);
+    setHistoricalAcknowledged(false); setAnchorQuote(null);
     try {
       if (contractStatus !== "已通过 RPC 字节码核对")
         throw new Error("部署合约尚未通过 BOT RPC 运行时代码核验");
@@ -318,6 +353,7 @@ export default function Home() {
         functionName: "tasks", args: [message.requester, digest] });
       if (existing[0] !== zeroAddress) throw new Error("该请求者的任务摘要已经登记，停止重复提交");
       setSigned({ ...prepared, signature, digest });
+      setHistoricalDigest(null);
       pendingSignature.current = null;
       setPendingSignatureAvailable(false);
       setNotice("EIP-712 签名已由 TypeScript 和本机原 Python 模型交叉验证；尚未发送链上交易。");
@@ -338,6 +374,7 @@ export default function Home() {
         functionName: "tasks", args: [prepared.message.requester, digest] });
       if (existing[0] !== zeroAddress) throw new Error("该请求者的任务摘要已经登记，停止重复提交");
       setSigned({ ...prepared, signature, digest });
+      setHistoricalDigest(null); setHistoricalAcknowledged(false); setAnchorQuote(null);
       pendingSignature.current = null;
       setPendingSignatureAvailable(false);
       setNotice("原内存签名已通过 TypeScript 与原 Python 模型交叉验证；尚未发送链上交易。");
@@ -345,24 +382,31 @@ export default function Home() {
     finally { setBusy(false); }
   }
   async function prepareAnchorQuote() {
-    if (!provider || !address || !signed || !preview || !anchorAddress || !anchorRuntimeHash) return;
+    if (!provider || !address || !activeDigest || !preview || !anchorAddress || !anchorRuntimeHash) return;
     setBusy(true); setNotice(""); setAnchorQuote(null);
     try {
       if (anchorIntent) throw new Error("已有本机提交记录；请先读回回执，禁止重复发送");
       if (contractStatus !== "已通过 RPC 字节码核对") throw new Error("合约字节码未通过核对");
       requireReviewedSigningPreview();
-      requireBotContext(preview.task, signed.message.requester, (await walletAccounts(provider))[0],
+      requireBotContext(preview.task, confirmedDemo.requester, (await walletAccounts(provider))[0],
         await walletChainId(provider), await publicClient.getChainId());
       requireConfirmedDemoBinding(preview.task, address, serviceId, serviceSigner);
-      if (!(await verifySignature(signed.message, signed.signature)) ||
-          await taskDigest(signed.message, signed.signature) !== signed.digest ||
-          signed.serviceIdHash !== signingPreview.service_id_hash ||
-          signed.serviceSigner.toLowerCase() !== confirmedDemo.serviceSigner.toLowerCase())
-        throw new Error("请求者签名或 Demo 参数已变化");
+      if (signed) {
+        if (!(await verifySignature(signed.message, signed.signature)) ||
+            await taskDigest(signed.message, signed.signature) !== signed.digest ||
+            signed.serviceIdHash !== signingPreview.service_id_hash ||
+            signed.serviceSigner.toLowerCase() !== confirmedDemo.serviceSigner.toLowerCase())
+          throw new Error("请求者签名或 Demo 参数已变化");
+      } else if (activeDigest !== requireHistoricalObservation()) {
+        throw new Error("既往摘要与固定观察记录不一致");
+      }
+      const serviceHash = await sha256(new TextEncoder().encode(serviceId));
+      if (preview.hash !== confirmedDemo.specHash || serviceHash !== signingPreview.service_id_hash)
+        throw new Error("TaskSpec 或服务哈希已变化");
       const existing = await publicClient.readContract({ address: anchorAddress, abi: anchorAbi,
-        functionName: "tasks", args: [address, signed.digest] });
+        functionName: "tasks", args: [address, activeDigest] });
       if (existing[0] !== zeroAddress) throw new Error("该请求者的任务摘要已登记");
-      const args = [signed.digest, preview.hash, signed.serviceIdHash, signed.serviceSigner] as const;
+      const args = [activeDigest, preview.hash, serviceHash, getAddress(serviceSigner)] as const;
       await publicClient.simulateContract({ address: anchorAddress, abi: anchorAbi,
         functionName: "anchorTask", args, account: address });
       const [gas, gasPrice, balance, latest, pending] = await Promise.all([
@@ -376,7 +420,7 @@ export default function Home() {
       const gasLimit = gas * 12n / 10n;
       const maxFee = gasLimit * gasPrice;
       if (balance < maxFee) throw new Error("BOT 余额不足以覆盖预计最高 Gas 费用");
-      setAnchorQuote({ digest: signed.digest, gas, gasLimit, gasPrice, maxFee,
+      setAnchorQuote({ digest: activeDigest, gas, gasLimit, gasPrice, maxFee,
         balance, nonce: pending, createdAt: Date.now() });
       setNotice("只读模拟和 Gas 估算通过；这不是签名或主网交易批准。");
     } catch (error) { setNotice(friendlyWalletError(error)); }
@@ -384,7 +428,7 @@ export default function Home() {
   }
   async function readAnchorReceipt(hash: Hex, digest: Hex) {
     if (!anchorAddress || !anchorRuntimeHash) throw new Error("缺少经过核验的合约配置");
-    if (digest !== anchorIntent?.digest && digest !== signed?.digest)
+    if (digest !== anchorIntent?.digest && digest !== activeDigest)
       throw new Error("待查摘要不属于当前 Demo 提交记录");
     const [receipt, transaction, currentCode, currentChain] = await Promise.all([
       publicClient.getTransactionReceipt({ hash }), publicClient.getTransaction({ hash }),
@@ -395,6 +439,13 @@ export default function Home() {
         receipt.transactionHash !== hash || transaction.from.toLowerCase() !== confirmedDemo.requester.toLowerCase() ||
         transaction.to?.toLowerCase() !== anchorAddress.toLowerCase())
       throw new Error("回执状态、网络、字节码或交易来源不匹配");
+    const submittedCall = decodeFunctionData({ abi: anchorAbi, data: transaction.input });
+    if (submittedCall.functionName !== "anchorTask" ||
+        submittedCall.args[0].toLowerCase() !== digest.toLowerCase() ||
+        submittedCall.args[1].toLowerCase() !== confirmedDemo.specHash.toLowerCase() ||
+        submittedCall.args[2].toLowerCase() !== signingPreview.service_id_hash.toLowerCase() ||
+        submittedCall.args[3].toLowerCase() !== confirmedDemo.serviceSigner.toLowerCase())
+      throw new Error("部署合约交易输入与固定 Demo 参数不一致");
     const events = receipt.logs.filter(log => log.address.toLowerCase() === anchorAddress!.toLowerCase())
       .map(log => { try { return decodeEventLog({ abi: anchorAbi, data: log.data, topics: log.topics }); }
                     catch { return null; } })
@@ -428,33 +479,54 @@ export default function Home() {
     const contractAddress = anchorAddress;
     if (!mainnetWritesEnabled || !contractAddress || !anchorRuntimeHash ||
         contractStatus !== "已通过 RPC 字节码核对" ||
-        !provider || !address || !signed || !preview || !anchorQuote || anchorIntent) return;
+        !provider || !address || !activeDigest || !preview || !anchorQuote || anchorIntent ||
+        (!signed && !historicalAcknowledged)) return;
     setBusy(true); setNotice("");
     try {
-      if (Date.now() - anchorQuote.createdAt > 60_000 || anchorQuote.digest !== signed.digest)
+      const gate = await fetch("/api/mainnet-write-status", { cache: "no-store" });
+      const approval = await gate.json();
+      if (!gate.ok || approval.enabled !== true)
+        throw new Error("本地主网写入开关未开放，停止发送");
+      if (Date.now() - anchorQuote.createdAt > 60_000 || anchorQuote.digest !== activeDigest)
         throw new Error("交易预览已过期，请重新运行只读模拟");
-      requireBotContext(preview.task, signed.message.requester, (await walletAccounts(provider))[0],
+      requireReviewedSigningPreview();
+      requireBotContext(preview.task, confirmedDemo.requester, (await walletAccounts(provider))[0],
         await walletChainId(provider), await publicClient.getChainId());
       requireConfirmedDemoBinding(preview.task, address, serviceId, serviceSigner);
-      if (signed.message.requester.toLowerCase() !== address.toLowerCase() ||
-          serviceSigner.toLowerCase() !== signed.serviceSigner.toLowerCase() ||
-          !(await verifySignature(signed.message, signed.signature)) ||
-          await taskDigest(signed.message, signed.signature) !== signed.digest)
-        throw new Error("链、请求者或签名已变化，请重新准备承诺");
+      if (signed) {
+        if (signed.message.requester.toLowerCase() !== address.toLowerCase() ||
+            serviceSigner.toLowerCase() !== signed.serviceSigner.toLowerCase() ||
+            !(await verifySignature(signed.message, signed.signature)) ||
+            await taskDigest(signed.message, signed.signature) !== signed.digest)
+          throw new Error("链、请求者或签名已变化，请重新准备承诺");
+      } else if (activeDigest !== requireHistoricalObservation() || !historicalAcknowledged) {
+        throw new Error("既往观察记录尚未由用户核对");
+      }
+      const serviceHash = await sha256(new TextEncoder().encode(serviceId));
+      if (preview.hash !== confirmedDemo.specHash || serviceHash !== signingPreview.service_id_hash)
+        throw new Error("TaskSpec 或服务哈希已变化");
       const existing = await publicClient.readContract({
         address: contractAddress, abi: anchorAbi, functionName: "tasks",
-        args: [address, signed.digest]
+        args: [address, activeDigest]
       });
       if (existing[0] !== zeroAddress)
         throw new Error("该请求者已登记相同任务摘要");
       const pending = await publicClient.getTransactionCount({ address, blockTag: "pending" });
       if (pending !== anchorQuote.nonce) throw new Error("账户 nonce 已变化，请重新预览");
-      const args = [signed.digest, preview.hash, signed.serviceIdHash, signed.serviceSigner] as const;
+      const args = [activeDigest, preview.hash, serviceHash, getAddress(serviceSigner)] as const;
       await publicClient.simulateContract({ address: contractAddress, abi: anchorAbi,
         functionName: "anchorTask", args, account: address });
+      const [gas, gasPrice, balance] = await Promise.all([
+        publicClient.estimateContractGas({ address: contractAddress, abi: anchorAbi,
+          functionName: "anchorTask", args, account: address }),
+        publicClient.getGasPrice(), publicClient.getBalance({ address })
+      ]);
+      if (gas > anchorQuote.gasLimit || gasPrice !== anchorQuote.gasPrice ||
+          balance < anchorQuote.maxFee)
+        throw new Error("Gas、报价或余额已变化，请重新运行只读预览");
       const wallet = createWalletClient({ account: address, chain: botChain, transport: custom(provider) });
       if (activeProvider.current !== provider) throw new Error("钱包连接已变化，请重新准备承诺");
-      const intent = { digest: signed.digest };
+      const intent = { digest: activeDigest };
       localStorage.setItem(intentKey, JSON.stringify(intent));
       setAnchorIntent(intent);
       const hash = await wallet.writeContract({
@@ -465,7 +537,7 @@ export default function Home() {
       setAnchorIntent({ ...intent, hash });
       setTx(hash);
       await publicClient.waitForTransactionReceipt({ hash, confirmations: 2, timeout: 45_000 });
-      await readAnchorReceipt(hash, signed.digest);
+      await readAnchorReceipt(hash, activeDigest);
     } catch (error) { setNotice("发送或核验状态需人工确认，禁止重复提交：" + friendlyWalletError(error)); }
     finally { setBusy(false); }
   }
@@ -481,7 +553,9 @@ export default function Home() {
     chainId === 677 && rpcChainId === 677 && isAddress(serviceSigner) && serviceId.trim() &&
     contractStatus === "已通过 RPC 字节码核对" &&
     matchesConfirmedDemoBinding(preview.task, address, serviceId, serviceSigner));
-  const readyToAnchor = !!(readyToSign && signed && anchorQuote && !anchorIntent &&
+  const readyToAnchor = !!(readyToSign && activeDigest && anchorQuote &&
+    anchorQuote.digest === activeDigest && !anchorIntent &&
+    (signed || historicalAcknowledged) &&
     mainnetWritesEnabled && anchorAddress && anchorRuntimeHash &&
     contractStatus === "已通过 RPC 字节码核对");
   return <main>
@@ -489,7 +563,7 @@ export default function Home() {
       <a href="https://github.com/CH-ZHOU-0512/TreasuryTally" target="_blank" rel="noreferrer">原项目 ↗</a></header>
     <section className="hero"><div className="eyebrow">ETH WUHAN 2026 · LOCAL DEVELOPMENT PREVIEW</div>
       <h1>让每笔任务承诺<br/><em>有据可查。</em></h1>
-      <p>核验服务商报表、链上资金流与公开回执。演示合约已部署在 BOT Chain 677；当前只开放审阅任务和钱包连接，任务签名与链上登记仍分别等待批准。</p>
+      <p>核验服务商报表、链上资金流与公开回执。演示合约已部署在 BOT Chain 677；本页可审阅此前签名观察记录和执行只读交易预览。主网写入需单独批准。</p>
       <div className="hero-meta"><span>01 / 任务范围</span><span>02 / 钱包签名</span><span>03 / 链上登记</span></div>
     </section>
     <div className="grid">
@@ -531,6 +605,9 @@ export default function Home() {
           <label>服务签名者地址<input value={serviceSigner} onChange={e => { setServiceSigner(e.target.value); setSigned(null); }}
             placeholder="0x…" autoComplete="off"/></label></div>
         <button className="secondary" onClick={prepareTask} disabled={!readyToSign || busy}>准备任务承诺</button>
+        <div className="warning">既往记录：2026-10-16 页面曾显示该固定 TaskCommitment 通过 TypeScript 与原 Python 模型校验，并产生摘要 {historicalObservation.task_digest}。原始签名未保存；当前页面无法独立重验该签名。</div>
+        <button className="secondary" onClick={restoreHistoricalDigest} disabled={!readyToSign || busy || !!anchorIntent}>
+          载入先前已核验的公开摘要（只读检查）</button>
         {prepared && <div className="preview"><h3>待签消息已与审阅文件核对</h3><pre>{JSON.stringify(reviewedTypedData, null, 2)}</pre>
           <p className="hint">服务签名者 {prepared.serviceSigner} 不属于上游任务签名字段；本地应用规则将它与内部 Demo 服务绑定，原合约不验证此授权。</p>
           <button onClick={signTask} disabled={busy || !taskSignaturesEnabled || pendingSignatureAvailable || signRequestAttempted || !!signed}>签署 EIP-712 任务承诺</button>
@@ -544,11 +621,16 @@ export default function Home() {
           <div><dt>EIP-712 摘要</dt><dd>{typedDataDigest(signed.message)}</dd></div>
           <div><dt>完整任务摘要</dt><dd>{signed.digest}</dd></div>
           <div><dt>服务 ID SHA-256</dt><dd>{signed.serviceIdHash}</dd></div></dl>}
+        {historicalDigest && <div className="preview"><h3>既往签名观察记录 · 本次未重新验签</h3>
+          <p>来源：{historicalObservation.source_report}；记录 SHA-256：{historicalObservation.source_report_sha256}。</p>
+          <dl className="facts"><div><dt>先前确认的 taskDigest</dt><dd>{historicalDigest}</dd></div>
+            <div><dt>请求者</dt><dd>{confirmedDemo.requester}</dd></div>
+            <div><dt>原始签名</dt><dd>未保存；当前无法独立重验</dd></div></dl></div>}
       </section>
     </div>
     <section className="panel"><div className="panel-head"><span className="step">02A</span><h2>完整 EIP-712 签名前预览</h2>
-      <span className="pill caution">未签署</span></div>
-      <p className="muted">以下是固定的内部 Demo TaskCommitment 待签数据，来自已确认的 TaskSpec 和原 Python 模型；查看它不会请求钱包签名。签名完成前没有 taskDigest。</p>
+      <span className="pill caution">{signed ? "本次签名已验证" : historicalDigest ? "既往摘要已载入" : "本次未签署"}</span></div>
+      <p className="muted">以下是固定的内部 Demo TaskCommitment 结构化数据，来自已确认的 TaskSpec 和原 Python 模型；查看它不会请求钱包签名。既往摘要不等于本次重新验签。</p>
       <dl className="facts"><div><dt>目标合约</dt><dd>{anchorAddress || "未配置"} · {contractStatus}</dd></div>
         <div><dt>TaskSpec SHA-256</dt><dd>{signingPreview.task_spec_hash}</dd></div>
         <div><dt>EIP-712 消息摘要</dt><dd>{signingPreview.typed_data_digest}</dd></div>
@@ -565,23 +647,26 @@ export default function Home() {
         <div><dt>主网地址</dt><dd>{anchorAddress || "尚未部署"}</dd></div>
         <div><dt>字节码核对</dt><dd>{contractStatus}</dd></div>
         <div><dt>交易</dt><dd>{tx ? <a href={`https://scan.botchain.ai/tx/${tx}`} target="_blank" rel="noreferrer">{tx} ↗</a> : "未提交"}</dd></div></dl>
-      {signed && !anchorIntent && <button className="secondary" onClick={prepareAnchorQuote}
+      {activeDigest && !anchorIntent && <button className="secondary" onClick={prepareAnchorQuote}
         disabled={busy || !readyToSign}>运行只读 anchorTask 模拟与费用预览</button>}
-      {anchorQuote && signed && <div className="preview"><h3>anchorTask 交易预览 · 未批准发送</h3>
-        <dl className="facts"><div><dt>From</dt><dd>{signed.message.requester}</dd></div>
+      {anchorQuote && activeDigest && <div className="preview"><h3>anchorTask 交易预览 · 未批准发送</h3>
+        <dl className="facts"><div><dt>From</dt><dd>{confirmedDemo.requester}</dd></div>
           <div><dt>To</dt><dd>{anchorAddress}</dd></div>
           <div><dt>Network</dt><dd>BOT Chain Mainnet · 677</dd></div>
           <div><dt>Function</dt><dd>anchorTask(bytes32,bytes32,bytes32,address)</dd></div>
-          <div><dt>taskDigest</dt><dd>{signed.digest}</dd></div>
+          <div><dt>taskDigest</dt><dd>{activeDigest}</dd></div>
           <div><dt>specHash</dt><dd>{preview?.hash}</dd></div>
-          <div><dt>serviceIdHash</dt><dd>{signed.serviceIdHash}</dd></div>
-          <div><dt>serviceSigner</dt><dd>{signed.serviceSigner}</dd></div>
+          <div><dt>serviceIdHash</dt><dd>{signingPreview.service_id_hash}</dd></div>
+          <div><dt>serviceSigner</dt><dd>{serviceSigner}</dd></div>
           <div><dt>Gas 估算 / 上限</dt><dd>{anchorQuote.gas.toString()} / {anchorQuote.gasLimit.toString()}</dd></div>
           <div><dt>Gas 报价</dt><dd>{anchorQuote.gasPrice.toString()} wei</dd></div>
           <div><dt>最高费用 / 余额</dt><dd>{formatEther(anchorQuote.maxFee)} BOT / {formatEther(anchorQuote.balance)} BOT</dd></div>
           <div><dt>nonce</dt><dd>{anchorQuote.nonce}</dd></div></dl>
-        <div className="warning">合约只记录承诺，不验证签名、服务方授权、资金转账或报表金额。此预览来自只读 eth_call 模拟与 Gas 估算；主网交易需另行明确批准并由你本人确认钱包弹窗。</div>
+        <div className="warning">{historicalDigest ? "此摘要来自先前签名观察记录；当前没有原始签名，未重新验签。" : "当前签名已在本次会话交叉校验。"}合约只记录承诺，不验证签名、服务方授权、资金转账或报表金额。此预览来自只读 eth_call 模拟与 Gas 估算；主网交易需另行明确批准并由你本人确认钱包弹窗。</div>
       </div>}
+      {historicalDigest && <label className="acknowledge"><input type="checkbox" checked={historicalAcknowledged}
+        onChange={e => setHistoricalAcknowledged(e.target.checked)}/>
+        我已核对这是此前真实签名的历史观察记录，当前未重新验签；若以后获准发送，将使用上述固定摘要。</label>}
       {anchorIntent && <div className="warning">本机已有提交意图：摘要 {anchorIntent.digest}。{anchorIntent.hash
         ? "请以链上回执为准；即使超时也禁止自动重复发送。" : "尚无交易 Hash，广播状态未知；请检查钱包活动与账户 nonce，禁止重复发送。"}</div>}
       {anchorIntent?.hash && <button className="secondary" onClick={refreshAnchorReceipt} disabled={busy}>只读重查交易回执、事件与存储</button>}
@@ -592,6 +677,8 @@ export default function Home() {
         <div><dt>BOTScan</dt><dd><a href={`https://scan.botchain.ai/tx/${anchorRecord.hash}`}
           target="_blank" rel="noreferrer">{anchorRecord.hash} ↗</a></dd></div></dl>}
       <button disabled={!readyToAnchor || busy} onClick={anchorTask}>在 BOT Chain 登记 anchorTask</button>
+      <button className="secondary" onClick={() => void refreshWriteApproval()} disabled={busy}>检查本地写入授权状态</button>
+      <p className="hint">本地主网写入授权：{mainnetWritesEnabled ? "开发环境已开启，仍需主动点击并亲自确认 MetaMask" : "关闭"}</p>
       {!mainnetWritesEnabled && <p className="hint">业务写入安全锁已启用：已部署合约的 anchorTask 仍需单独批准，当前不会发送交易。</p>}
     </section>
     {notice && <div className="notice" role="status">{notice}</div>}

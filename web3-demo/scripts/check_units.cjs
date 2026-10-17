@@ -1,11 +1,14 @@
 const assert = require("node:assert/strict");
+const { createHash } = require("node:crypto");
 const fs = require("node:fs");
 const { generatePrivateKey, privateKeyToAccount } = require("viem/accounts");
 const { parseTaskSpec, verifySpec, stableHash, utcTimestamp, requireBotContext,
-  taskDigest, typedDataDigest, verifySignature, taskDomain, taskTypes } = require("../.tmp/test-lib/task.js");
-const { collectWallets, switchToBot, walletChainId, friendlyWalletError } = require("../.tmp/test-lib/wallet.js");
-const { anchorAbi } = require("../.tmp/test-lib/anchor.js");
-const { confirmedDemo, requireConfirmedDemoBinding } = require("../.tmp/test-lib/demo.js");
+  taskDigest, typedDataDigest, verifySignature, taskDomain, taskTypes } = require("../.tmp/test-lib/lib/task.js");
+const { collectWallets, switchToBot, walletChainId, friendlyWalletError } = require("../.tmp/test-lib/lib/wallet.js");
+const { anchorAbi } = require("../.tmp/test-lib/lib/anchor.js");
+const { confirmedDemo, requireConfirmedDemoBinding } = require("../.tmp/test-lib/lib/demo.js");
+const { requireHistoricalObservation } = require("../.tmp/test-lib/lib/historical.js");
+const historical = require("../.tmp/test-lib/public/bot677-demo/historical-signature-observation.json");
 const compiledAbi = JSON.parse(fs.readFileSync("public/CommitmentAnchor.paris.json", "utf8")).abi;
 function abiShape(item) {
   return { type: item.type, name: item.name,
@@ -51,6 +54,16 @@ for (const item of anchorAbi) {
   assert.equal(typedDataDigest(signingPreview.message), confirmedDemo.typedDataDigest);
   assert.equal(signingPreview.typed_data_digest, confirmedDemo.typedDataDigest);
   assert.ok(!("signature" in signingPreview) && !("taskDigest" in signingPreview));
+  assert.equal(requireHistoricalObservation(), confirmedDemo.historicalTaskDigest);
+  assert.equal(historical.signature_retained, false);
+  assert.equal(historical.source_report_sha256, confirmedDemo.historicalReportSha256);
+  const reportSha = "0x" + createHash("sha256").update(fs.readFileSync(
+    "../docs/bot/stage3d-signature-observation.md")).digest("hex");
+  assert.equal(reportSha, historical.source_report_sha256, "the public historical record has its original report");
+  const originalDigest = historical.task_digest;
+  historical.task_digest = "0x" + "00".repeat(32);
+  assert.throws(() => requireHistoricalObservation(), /不一致/);
+  historical.task_digest = originalDigest;
   assert.throws(() => requireConfirmedDemoBinding(confirmedTask, confirmedDemo.serviceSigner, confirmedDemo.serviceId, confirmedDemo.serviceSigner));
   assert.throws(() => requireConfirmedDemoBinding(confirmedTask, confirmedDemo.requester, "wrong-service", confirmedDemo.serviceSigner));
   assert.throws(() => requireConfirmedDemoBinding(confirmedTask, confirmedDemo.requester, confirmedDemo.serviceId, confirmedDemo.requester));

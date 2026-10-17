@@ -1,0 +1,18 @@
+{
+  "status": "HISTORICAL_UI_OBSERVATION_ONLY",
+  "observed_at_utc": "2026-10-16T15:46:34.0801646Z",
+  "source_commit": "b3cda1cd07c7d811707340afe373db70cc73e8be",
+  "source_report": "docs/bot/stage3d-signature-observation.md",
+  "source_report_sha256": "0xeab1bdd8a29e98b207a6ef0c6d1ad766cc0b48fb4af980fd8ec79d49bfc225ac",
+  "chain_id": 677,
+  "requester": "0x89F415bb42e356E8b892C10B05522e0a8Ef151F3",
+  "task_id": "bot677-demo-usdt-26879920-two-accounts",
+  "spec_hash": "0x9e0073e83868993f4da3bc013fe8aca7e90af7a99fb80bcda8d593963528d093",
+  "typed_data_digest": "0x193954b4c310b54ac5b93bf9cb546d31f831f40b76378a100c53010d93fb7f2a",
+  "task_digest": "0xc3702a7758dc0eb150ed0a51c13c8c30dd7b6b850f41c0abdcb446778361b25d",
+  "service_id": "treasurytally-bot-internal-demo-20261016",
+  "service_id_hash": "0x540bafe01cfa9731e46b8116f8dc63fa62e3a2853b0cb28beeabdaaa0ddbd7cd",
+  "service_signer": "0xb6bF6a936F529650992B71e2DeB79E80Fd3da71B",
+  "signature_retained": false,
+  "verification_claim": "Previous browser UI showed TypeScript and upstream Python validation success; original signature was not retained and cannot be independently reverified in this session."
+}

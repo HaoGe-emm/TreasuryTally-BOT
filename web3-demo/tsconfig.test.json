@@ -2,8 +2,8 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "module": "commonjs", "moduleResolution": "node", "noEmit": false,
-    "outDir": ".tmp/test-lib", "incremental": false, "isolatedModules": false
+    "outDir": ".tmp/test-lib", "rootDir": ".", "incremental": false, "isolatedModules": false
   },
-  "include": ["lib/task.ts", "lib/chain.ts", "lib/wallet.ts", "lib/anchor.ts", "lib/demo.ts"],
+  "include": ["lib/task.ts", "lib/chain.ts", "lib/wallet.ts", "lib/anchor.ts", "lib/demo.ts", "lib/historical.ts"],
   "exclude": ["node_modules"]
 }
