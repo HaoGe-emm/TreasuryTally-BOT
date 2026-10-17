@@ -8,7 +8,17 @@ authority-for:
 last-reviewed: 2026-10-07
 ---
 
-# TreasuryTally
+# TreasuryTally BOT Chain Edition
+
+此仓库是 ETH Wuhan 2026 的独立 BOT Chain Demo 副本，原项目作者为
+[CH-ZHOU-0512](https://github.com/CH-ZHOU-0512/TreasuryTally)。来源固定版本、版权及用户提供的专门授权见
+[SOURCE_AND_AUTHORIZATION.md](SOURCE_AND_AUTHORIZATION.md)。没有把单个合约的 MIT 声明扩展为整个仓库的许可证。
+
+公开 Web3 Demo 位于 [web3-demo](web3-demo/README.md)：连接访客自己的钱包，在 BOT Chain Mainnet 677
+创建、签署并登记任务承诺，同时读取已有真实主网交易。登记不证明资金发生转移或财务报表核验通过。
+原有 TreasuryTally 业务说明如下；原网站和上游仓库不由本独立副本修改。
+
+## 原 TreasuryTally 业务说明
 
 TreasuryTally 是链上报表验收工具：上传服务商报表后，系统把报表声明与真实链上资金流放在同一张对账图中，定位漏报、
 重复和内部互转，并生成能够说明“哪里不符合约定、如何复现”的验收回执。
